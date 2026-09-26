@@ -12,18 +12,18 @@ public final class Constants {
   // Added by Try It #4: one CAN ID + one magnet offset per corner, all named,
   // instead of literals baked into the array in Drivetrain.
   public static final class DriveConstants {
-    public static final int kFrontLeftDrivePort = 1;     // CAN IDs — change to yours
-    public static final int kFrontLeftSteerPort = 2;
-    public static final int kFrontLeftCancoderPort = 9;
-    public static final int kFrontRightDrivePort = 3;
-    public static final int kFrontRightSteerPort = 4;
-    public static final int kFrontRightCancoderPort = 10;
-    public static final int kBackLeftDrivePort = 5;
-    public static final int kBackLeftSteerPort = 6;
-    public static final int kBackLeftCancoderPort = 11;
-    public static final int kBackRightDrivePort = 7;
-    public static final int kBackRightSteerPort = 8;
-    public static final int kBackRightCancoderPort = 12;
+    public static final int kFrontLeftDrivePort = 2;     // CAN IDs — change to yours
+    public static final int kFrontLeftSteerPort = 1;
+    public static final int kFrontLeftCancoderPort = 13;
+    public static final int kFrontRightDrivePort = 4;
+    public static final int kFrontRightSteerPort = 3;
+    public static final int kFrontRightCancoderPort = 16;
+    public static final int kBackLeftDrivePort = 8;
+    public static final int kBackLeftSteerPort = 7;
+    public static final int kBackLeftCancoderPort = 14;
+    public static final int kBackRightDrivePort = 6;
+    public static final int kBackRightSteerPort = 5;
+    public static final int kBackRightCancoderPort = 0;
 
     /**
      * ====== NEXT LESSON: ADD CODE HERE ======
@@ -32,10 +32,10 @@ public final class Constants {
      */
 
     // Magnet offsets (rotations) — measure with Phoenix Tuner X, change to yours.
-    public static final double kFrontLeftMagnetOffset = 0.0;
-    public static final double kFrontRightMagnetOffset = 0.0;
-    public static final double kBackLeftMagnetOffset = 0.0;
-    public static final double kBackRightMagnetOffset = 0.0;
+    public static final double kFrontLeftMagnetOffset = 0.272949;
+    public static final double kFrontRightMagnetOffset = 0.170898;
+    public static final double kBackLeftMagnetOffset = 0.114502;
+    public static final double kBackRightMagnetOffset = -0.418213;
 
     public static final double kDriveGearRatio = 6.75;                 // rotor : wheel
     public static final double kWheelDiameterMeters = 0.1016;          // 4 inch wheel
@@ -53,8 +53,8 @@ public final class Constants {
   }
 
   public static final class SteerConstants {
-    public static final double kP = 0.0005;          // from Lesson 5 — retune once the real gearing lands
-    public static final double kSteerGearRatio = 25.0; // rotor : steering
+    public static final double kP = 0.008;          // from Lesson 5 — retune once the real gearing lands
+    public static final double kSteerGearRatio = 1; // rotor : steering
     public static final InvertedValue kSteerInverted = InvertedValue.CounterClockwise_Positive; // flip if your steering counts backward
   }
 
