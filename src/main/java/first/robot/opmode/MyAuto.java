@@ -6,6 +6,7 @@ package first.robot.opmode;
 
 import org.wpilib.opmode.Autonomous;
 import org.wpilib.opmode.PeriodicOpMode;
+
 import first.robot.Robot;
 
 @Autonomous(name = "My Auto", group = "Group 1")
@@ -15,6 +16,13 @@ public class MyAuto extends PeriodicOpMode {
   /** The Robot instance is passed into the opmode via the constructor. */
   public MyAuto(Robot robot) {
     this.robot = robot;
+  }
+
+  // Added by Lesson 0's Try It #1: print a message once, on enable, the same
+  // way MyTeleop does.
+  @Override
+  public void start() {
+    System.out.println("Hello from Team 5010! Auto started.");
   }
 
   /*

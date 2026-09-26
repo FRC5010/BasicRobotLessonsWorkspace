@@ -6,6 +6,7 @@ package first.robot.opmode;
 
 import org.wpilib.opmode.PeriodicOpMode;
 import org.wpilib.opmode.Teleop;
+
 import first.robot.Robot;
 
 @Teleop
@@ -15,21 +16,36 @@ public class MyTeleop extends PeriodicOpMode {
   /** The Robot instance is passed into the opmode via the constructor. */
   public MyTeleop(Robot robot) {
     this.robot = robot;
+
+    // Left stick translates by default; bumpers spin in place.
+    robot.drivetrain.setDefaultCommand(
+        robot.drivetrain.translate(
+            () -> -robot.driverController.getLeftY(),   // forward = +X
+            () -> -robot.driverController.getLeftX())); // left    = +Y
+
+    robot.driverController.leftBumper().whileTrue(robot.drivetrain.rotate(0.3));
+    robot.driverController.rightBumper().whileTrue(robot.drivetrain.rotate(-0.3));
+
+    /**
+     * ====== NEXT LESSON: ADD CODE HERE ======
+     * Bind two taps that turn the whole robot to face a heading: the bottom face button
+     * for 90°, the right face button for 0°.
+     */
   }
 
   @Override
   public void disabledPeriodic() {
-    /* Called on every robot period while the robot is disabled. */
+    /* Called periodically (on every DS packet) while the robot is disabled. */
   }
 
   @Override
   public void start() {
-    /* Called once when the robot is enabled. */
+    System.out.println("Hello from Team 5010! Teleop started.");
   }
 
   @Override
   public void periodic() {
-    /* Called on every robot period while the robot is enabled. */
+    /* Called periodically (set time interval) while the robot is enabled. */
   }
 
   @Override
