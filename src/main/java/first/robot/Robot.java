@@ -4,7 +4,15 @@
 
 package first.robot;
 
+import org.wpilib.command3.Mechanism;
+import org.wpilib.command3.Scheduler;
+import org.wpilib.command3.SchedulerEvent;
+import org.wpilib.command3.button.CommandGamepad;
 import org.wpilib.framework.OpModeRobot;
+import org.wpilib.telemetry.Telemetry;
+import org.wpilib.system.DataLogManager;
+
+import first.robot.subsystems.Drivetrain;
 
 /**
  * The methods in this class are called automatically as described in the OpModeRobot documentation.
@@ -14,15 +22,44 @@ import org.wpilib.framework.OpModeRobot;
  * project.
  */
 public class Robot extends OpModeRobot {
+  // The robot's hardware lives here — built once, when the robot boots, and
+  // alive for as long as the robot runs. Opmodes are rebuilt fresh every time
+  // they're selected, so they reach in and use these instead of owning them.
+  public final CommandGamepad driverController = new CommandGamepad(0);
+  public final Drivetrain drivetrain = new Drivetrain();
+
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
    */
-  public Robot() {}
+  public Robot() {
+    DataLogManager.start(); // saves every published value to a .wpilog file
+    Scheduler.getDefault().addEventListener(this::logCommandStart);
+  }
 
   /** This function is called exactly once when the DS first connects. */
   @Override
   public void driverStationConnected() {}
+
+  /** Runs every tick, no matter which opmode is selected or whether the robot is enabled. */
+  @Override
+  public void robotPeriodic() {
+    Scheduler.getDefault().run();
+  }
+
+  private void logCommandStart(SchedulerEvent event) {
+    if (event instanceof SchedulerEvent.Scheduled scheduled) {
+      for (Mechanism mechanism : scheduled.command().requirements()) {
+        Telemetry.log(mechanism.getName() + "/CurrentCommand", scheduled.command().name());
+      }
+    }
+  }
+
+  /** Runs every tick, but only while the code is running in simulation. */
+  @Override
+  public void simulationPeriodic() {
+    drivetrain.simulatePeriodic();
+  }
 
   /**
    * This function is called periodically anytime when no opmode is selected, including when the
