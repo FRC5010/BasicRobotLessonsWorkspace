@@ -84,9 +84,21 @@ public class SwerveModule {
     double steerOutput = clamp(SteerConstants.kP * error, -1.0, 1.0);
     m_steerMotor.setThrottle(steerOutput);
 
+    /**
+     * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
+     * Drive only as hard as the wheel is pointed the right way: multiply the speed by
+     * the cosine of the steering error, so a wheel that's still turning doesn't push
+     * the robot sideways.
+     */
+
     // Drive: pass the commanded speed straight through.
     m_driveMotor.setThrottle(speedFraction);
   }
+
+  /**
+   * ====== NEXT LESSON: ADD CODE HERE ======
+   * Add resetDrivePosition: zero the drive encoder, so distance is measured from here.
+   */
 
   /** Keeps 'value' between 'min' and 'max'. */
   private double clamp(double value, double min, double max) {

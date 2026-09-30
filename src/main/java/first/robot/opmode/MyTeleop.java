@@ -9,9 +9,22 @@ import org.wpilib.opmode.Teleop;
 
 import first.robot.Robot;
 
+/**
+ * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
+ * Rename this opmode to RobotTeleop. It isn't template example code anymore — it's the
+ * permanent home for how this robot drives. Only the file and class name change; every
+ * binding stays as it is.
+ */
+
 @Teleop
 public class MyTeleop extends PeriodicOpMode {
   private final Robot robot;
+
+  /**
+   * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
+   * Rename the constructor to RobotTeleop too — a constructor always has its class's
+   * name.
+   */
 
   /** The Robot instance is passed into the opmode via the constructor. */
   public MyTeleop(Robot robot) {
@@ -26,11 +39,9 @@ public class MyTeleop extends PeriodicOpMode {
     robot.driverController.leftBumper().whileTrue(robot.drivetrain.rotate(0.3));
     robot.driverController.rightBumper().whileTrue(robot.drivetrain.rotate(-0.3));
 
-    /**
-     * ====== NEXT LESSON: ADD CODE HERE ======
-     * Bind two taps that turn the whole robot to face a heading: the bottom face button
-     * for 90°, the right face button for 0°.
-     */
+    // Tap the bottom face button to turn and face 90°; the right face button for 0°.
+    robot.driverController.faceDown().onTrue(robot.drivetrain.turnToHeading(90));
+    robot.driverController.faceRight().onTrue(robot.drivetrain.turnToHeading(0));
   }
 
   @Override

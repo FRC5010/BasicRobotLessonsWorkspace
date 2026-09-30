@@ -9,13 +9,33 @@ import org.wpilib.opmode.PeriodicOpMode;
 
 import first.robot.Robot;
 
+/**
+ * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
+ * Rename this opmode to RobotAuto, and have the Driver Station list it under the name
+ * of the routine it runs.
+ */
+
 @Autonomous(name = "My Auto", group = "Group 1")
 public class MyAuto extends PeriodicOpMode {
   private final Robot robot;
 
+  /**
+   * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
+   * Rename the constructor to RobotAuto too — a constructor always has its class's
+   * name.
+   */
+
   /** The Robot instance is passed into the opmode via the constructor. */
   public MyAuto(Robot robot) {
     this.robot = robot;
+
+    /**
+     * ====== NEXT LESSON: ADD CODE HERE ======
+     * Schedule the autonomous routine exactly once, the moment this opmode is enabled:
+     * bind the drive-turn-drive sequence to the autonomous-mode trigger with onTrue.
+     * Binding it here, in the constructor, scopes it to this opmode, the same as every
+     * button binding.
+     */
   }
 
   // Added by Lesson 0's Try It #1: print a message once, on enable, the same
