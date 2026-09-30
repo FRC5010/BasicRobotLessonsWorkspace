@@ -6,30 +6,57 @@ package first.robot.opmode;
 
 import org.wpilib.opmode.PeriodicOpMode;
 import org.wpilib.opmode.Teleop;
+
 import first.robot.Robot;
+
+/**
+ * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
+ * Rename this opmode to RobotTeleop. It isn't template example code anymore — it's the
+ * permanent home for how this robot drives. Only the file and class name change; every
+ * binding stays as it is.
+ */
 
 @Teleop
 public class MyTeleop extends PeriodicOpMode {
   private final Robot robot;
 
+  /**
+   * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
+   * Rename the constructor to RobotTeleop too — a constructor always has its class's
+   * name.
+   */
+
   /** The Robot instance is passed into the opmode via the constructor. */
   public MyTeleop(Robot robot) {
     this.robot = robot;
+
+    // Left stick translates by default; bumpers spin in place.
+    robot.drivetrain.setDefaultCommand(
+        robot.drivetrain.translate(
+            () -> -robot.driverController.getLeftY(),   // forward = +X
+            () -> -robot.driverController.getLeftX())); // left    = +Y
+
+    robot.driverController.leftBumper().whileTrue(robot.drivetrain.rotate(0.3));
+    robot.driverController.rightBumper().whileTrue(robot.drivetrain.rotate(-0.3));
+
+    // Tap the bottom face button to turn and face 90°; the right face button for 0°.
+    robot.driverController.faceDown().onTrue(robot.drivetrain.turnToHeading(90));
+    robot.driverController.faceRight().onTrue(robot.drivetrain.turnToHeading(0));
   }
 
   @Override
   public void disabledPeriodic() {
-    /* Called on every robot period while the robot is disabled. */
+    /* Called periodically (on every DS packet) while the robot is disabled. */
   }
 
   @Override
   public void start() {
-    /* Called once when the robot is enabled. */
+    System.out.println("Hello from Team 5010! Teleop started.");
   }
 
   @Override
   public void periodic() {
-    /* Called on every robot period while the robot is enabled. */
+    /* Called periodically (set time interval) while the robot is enabled. */
   }
 
   @Override
