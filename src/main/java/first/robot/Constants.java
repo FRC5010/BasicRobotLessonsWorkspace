@@ -12,17 +12,17 @@ public final class Constants {
   // Added by Try It #4: one CAN ID + one magnet offset per corner, all named,
   // instead of literals baked into the array in Drivetrain.
   public static final class DriveConstants {
-    public static final int kFrontLeftDrivePort = 2;     // CAN IDs — change to yours
-    public static final int kFrontLeftSteerPort = 1;
+    public static final int kFrontLeftDrivePort = 4;     // CAN IDs — change to yours
+    public static final int kFrontLeftSteerPort = 3;
     public static final int kFrontLeftCancoderPort = 13;
-    public static final int kFrontRightDrivePort = 4;
-    public static final int kFrontRightSteerPort = 3;
+    public static final int kFrontRightDrivePort = 2;
+    public static final int kFrontRightSteerPort = 1;
     public static final int kFrontRightCancoderPort = 16;
-    public static final int kBackLeftDrivePort = 8;
-    public static final int kBackLeftSteerPort = 7;
+    public static final int kBackLeftDrivePort = 6;
+    public static final int kBackLeftSteerPort = 5;
     public static final int kBackLeftCancoderPort = 14;
-    public static final int kBackRightDrivePort = 6;
-    public static final int kBackRightSteerPort = 5;
+    public static final int kBackRightDrivePort = 8;
+    public static final int kBackRightSteerPort = 7;
     public static final int kBackRightCancoderPort = 0;
 
     /**
