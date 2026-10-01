@@ -1,15 +1,22 @@
 package first.robot.subsystems;
 
+import static org.wpilib.units.Units.Degrees;
+
 import java.util.function.DoubleSupplier;
+
+import com.ctre.phoenix6.CANBus;
+import com.ctre.phoenix6.hardware.Pigeon2;
 
 import org.wpilib.command3.Command;
 import org.wpilib.command3.Mechanism;
 import org.wpilib.command3.Scheduler;
+import org.wpilib.hardware.bus.CANPort;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.kinematics.SwerveModuleVelocity;
 import org.wpilib.telemetry.Telemetry;
 
 import first.robot.Constants.DriveConstants;
+import first.robot.Constants.HeadingConstants;
 
 public class Drivetrain implements Mechanism {
   // Corner order: FL, FR, BL, BR. Pick a convention and stick to it.
@@ -28,13 +35,11 @@ public class Drivetrain implements Mechanism {
           DriveConstants.kBackRight)
   };
 
-  /**
-   * ====== NEXT LESSON: ADD CODE HERE ======
-   * Add the Pigeon 2 gyro here, built from its CAN ID constant — heading is a fact
-   * about the whole chassis, so it belongs on the drivetrain, not on a module. Add two
-   * plain, non-final doubles for the sim to remember from tick to tick: the rotation
-   * rate just commanded, and the running fake heading.
-   */
+  private final Pigeon2 m_gyro = new Pigeon2(DriveConstants.kGyroPort, new CANBus(CANPort.CAN_S0));
+
+  // Remembered for the sim: what rotation rate did we just command?
+  private double m_lastCommandedOmega = 0.0;
+  private double m_simHeadingDegrees = 0.0;
 
   public Drivetrain() {
     Scheduler.getDefault().addPeriodic(this::logTelemetry);
@@ -47,50 +52,81 @@ public class Drivetrain implements Mechanism {
       double vy = vySupplier.getAsDouble();
       double speed = Math.hypot(vx, vy);                        // vector length
       double angleDeg = Math.toDegrees(Math.atan2(vy, vx));     // vector angle
-
-      /**
-       * ====== NEXT LESSON: ADD CODE HERE ======
-       * Pure translation commands no rotation: record a commanded rotation rate of 0,
-       * so the sim isn't left spinning on a stale value.
-       */
-
+      m_lastCommandedOmega = 0.0;                                // pure translation: no rotation
       for (SwerveModule module : m_modules) {
         module.setDesiredState(angleDeg, speed);
       }
     }).named("Translate");
   }
 
-  /**
-   * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
-   * Move this loop into a private helper, commandRotation, that also records the
-   * rotation rate it was asked for — the sim needs it — and make rotate a one-liner
-   * that calls the helper every tick.
-   */
-
   /** Spin in place at fractional angular rate 'omega' (positive = CCW). */
   public Command rotate(double omega) {
-    return runRepeatedly(() -> {
-      for (SwerveModule module : m_modules) {
-        double x = module.location.getX();
-        double y = module.location.getY();
-        double angleDeg = Math.toDegrees(Math.atan2(x, -y));
-        module.setDesiredState(angleDeg, omega);
-      }
-    }).named("Rotate");
+    return runRepeatedly(() -> commandRotation(omega)).named("Rotate");
+  }
+
+  /** Turn to face 'targetDegrees'. Finishes when within 2°. */
+  public Command turnToHeading(double targetDegrees) {
+    return run(coroutine -> {
+          while (Math.abs(headingError(targetDegrees)) >= 2.0) {
+            double omega = clamp(
+                HeadingConstants.kP * headingError(targetDegrees),
+                -0.5, 0.5); // clamp to ±50% turn power
+            commandRotation(omega);
+            coroutine.yield();
+          }
+          commandRotation(0.0); // reached it — stop
+        })
+        .whenCanceled(() -> commandRotation(0.0)) // interrupted — stop
+        .named("Turn To Heading");
   }
 
   /**
    * ====== NEXT LESSON: ADD CODE HERE ======
-   * Add turnToHeading: the same P control you used for steering, pointed at the whole
-   * robot. While the heading error is 2° or more, rotate at the heading gain times the
-   * error, clamped to half power; then stop, and stop if canceled too. Give it a
-   * question-method that returns the error wrapped into ±180°, so it always turns the
-   * short way, a clamp helper, and a getter for the gyro's heading in degrees, CCW
-   * positive.
+   * Add a whole-chassis driveDistance: zero one wheel's drive encoder, drive all four
+   * wheels straight forward at 40% power until that wheel has covered the distance,
+   * then stop — and stop if canceled, too.
    */
 
+  /** One tick of pure rotation: steer every wheel tangent to the circle. */
+  private void commandRotation(double omega) {
+    m_lastCommandedOmega = omega;
+    for (SwerveModule module : m_modules) {
+      double x = module.location.getX();
+      double y = module.location.getY();
+      double angleDeg = Math.toDegrees(Math.atan2(x, -y));
+      module.setDesiredState(angleDeg, omega);
+    }
+  }
+
+  /** Signed error to 'target' in degrees, wrapped to (-180, 180]. */
+  private double headingError(double targetDegrees) {
+    double error = targetDegrees - getHeadingDegrees();
+    while (error > 180) {
+      error -= 360;
+    }
+    while (error < -180) {
+      error += 360;
+    }
+    return error;
+  }
+
+  /** Keeps 'value' between 'min' and 'max'. */
+  private double clamp(double value, double min, double max) {
+    if (value > max) {
+      return max;
+    } else if (value < min) {
+      return min;
+    } else {
+      return value;
+    }
+  }
+
+  /** Robot heading in degrees (CCW positive). */
+  public double getHeadingDegrees() {
+    return m_gyro.getYaw().getValue().in(Degrees);
+  }
+
   private void logTelemetry() {
-    // Always-on watching; the acting lives in translate()/rotate() above.
     SwerveModuleVelocity[] states = new SwerveModuleVelocity[4];
     int index = 0;
     for (SwerveModule module : m_modules) {
@@ -103,24 +139,19 @@ public class Drivetrain implements Mechanism {
     }
     Telemetry.log("Drivetrain/ModuleStates", states, SwerveModuleVelocity.struct);
 
-    /**
-     * ====== NEXT LESSON: ADD CODE HERE ======
-     * Log the heading too — once as a number, and once as a Rotation2d so
-     * AdvantageScope can draw it.
-     */
+    Telemetry.log("Drivetrain/HeadingDegrees", getHeadingDegrees());
+    Telemetry.log("Drivetrain/Heading", Rotation2d.fromDegrees(getHeadingDegrees()), Rotation2d.struct);
   }
 
-  /** Advances every module's physics model. Only ever called in simulation. */
+  /** Advances every module's physics model, then the fake gyro. Only ever called in simulation. */
   public void simulatePeriodic() {
     for (SwerveModule module : m_modules) {
       module.simulatePeriodic();
     }
 
-    /**
-     * ====== NEXT LESSON: ADD CODE HERE ======
-     * Fake the gyro: every tick, add the commanded rotation rate times the tick's
-     * length to a running heading — treating full power as 360° per second — and push
-     * that heading into the gyro's sim state.
-     */
+    // Integrate the commanded angular rate into a fake heading. Treat 'omega'
+    // as a fraction of "360°/sec" — max power spins us 360°/s.
+    m_simHeadingDegrees += m_lastCommandedOmega * 360.0 * 0.020; // one 20 ms tick
+    m_gyro.getSimState().setRawYaw(m_simHeadingDegrees);
   }
 }

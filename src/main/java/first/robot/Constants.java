@@ -24,12 +24,7 @@ public final class Constants {
     public static final int kBackRightDrivePort = 8;
     public static final int kBackRightSteerPort = 7;
     public static final int kBackRightCancoderPort = 0;
-
-    /**
-     * ====== NEXT LESSON: ADD CODE HERE ======
-     * Give the gyro's CAN ID a named constant here too, next to the modules' — every
-     * CAN ID the robot owns in one file.
-     */
+    public static final int kGyroPort = 0;               // CAN ID — change to yours
 
     // Magnet offsets (rotations) — measure with Phoenix Tuner X, change to yours.
     public static final double kFrontLeftMagnetOffset = 0.272949;
@@ -58,9 +53,7 @@ public final class Constants {
     public static final InvertedValue kSteerInverted = InvertedValue.CounterClockwise_Positive; // flip if your steering counts backward
   }
 
-  /**
-   * ====== NEXT LESSON: ADD CODE HERE ======
-   * Add a HeadingConstants class holding the gain for turning the whole robot: turn
-   * power per degree of heading error.
-   */
+  public static final class HeadingConstants {
+    public static final double kP = 0.02; // turn power per degree of heading error
+  }
 }
