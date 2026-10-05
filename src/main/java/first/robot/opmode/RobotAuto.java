@@ -17,9 +17,15 @@ import first.robot.commands.Autos;
  * of the routine it runs.
  */
 
-@Autonomous(name = "My Auto", group = "Group 1")
+@Autonomous(name = "Do Nothing", group = "Group 1")
 public class RobotAuto extends PeriodicOpMode {
   private final Robot robot;
+  public class RobotAutoBox extends PeriodicOpMode {
+    public RobotAutoBox(Robot robot) {
+      @Override
+      public void periodic();
+    }
+  }
 
   /**
    * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
