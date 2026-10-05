@@ -52,9 +52,12 @@ public class Drivetrain implements Mechanism {
       double vy = vySupplier.getAsDouble();
       double speed = Math.hypot(vx, vy);                        // vector length
       double angleDeg = Math.toDegrees(Math.atan2(vy, vx));     // vector angle
-      m_lastCommandedOmega = 0.0;                                // pure translation: no rotation
+      m_lastCommandedOmega = 0.0;   
+      int index = 0;                             // pure translation: no rotation
       for (SwerveModule module : m_modules) {
         module.setDesiredState(angleDeg, speed);
+              Telemetry.log("Drivetrain/Module" + index++ + "/DesiredSteerAngleDegrees",
+          angleDeg);
       }
     }).named("Translate");
   }
@@ -90,11 +93,14 @@ public class Drivetrain implements Mechanism {
   /** One tick of pure rotation: steer every wheel tangent to the circle. */
   private void commandRotation(double omega) {
     m_lastCommandedOmega = omega;
+    int index = 0;
     for (SwerveModule module : m_modules) {
       double x = module.location.getX();
       double y = module.location.getY();
       double angleDeg = Math.toDegrees(Math.atan2(x, -y));
       module.setDesiredState(angleDeg, omega);
+      Telemetry.log("Drivetrain/Module" + index++ + "/DesiredSteerAngleDegrees",
+          angleDeg);
     }
   }
 
