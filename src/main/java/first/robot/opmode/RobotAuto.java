@@ -4,10 +4,12 @@
 
 package first.robot.opmode;
 
+import org.wpilib.command3.button.RobotModeTriggers;
 import org.wpilib.opmode.Autonomous;
 import org.wpilib.opmode.PeriodicOpMode;
 
 import first.robot.Robot;
+import first.robot.commands.Autos;
 
 /**
  * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
@@ -16,7 +18,7 @@ import first.robot.Robot;
  */
 
 @Autonomous(name = "My Auto", group = "Group 1")
-public class MyAuto extends PeriodicOpMode {
+public class RobotAuto extends PeriodicOpMode {
   private final Robot robot;
 
   /**
@@ -26,8 +28,10 @@ public class MyAuto extends PeriodicOpMode {
    */
 
   /** The Robot instance is passed into the opmode via the constructor. */
-  public MyAuto(Robot robot) {
+  public RobotAuto(Robot robot) {
     this.robot = robot;
+
+    RobotModeTriggers.autonomous().onTrue(Autos.driveTurnDrive(robot.drivetrain));
 
     /**
      * ====== NEXT LESSON: ADD CODE HERE ======

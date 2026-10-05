@@ -154,4 +154,27 @@ public class Drivetrain implements Mechanism {
     m_simHeadingDegrees += m_lastCommandedOmega * 360.0 * 0.020; // one 20 ms tick
     m_gyro.getSimState().setRawYaw(m_simHeadingDegrees);
   }
+
+
+public Command driveDistance(double meters){
+  return run(coroutine -> {
+    m_modules[0].resetDrivePosition();
+    while (Math.abs(m_modules[0].getDistanceMeters())< Math.abs(meters)){
+      for (SwerveModule module : m_modules){
+        module.setDesiredState(0, 0.4);
+      }
+      m_lastCommandedOmega = 0.0;
+      coroutine.yield();
+    }
+    for (SwerveModule module : m_modules){
+      module.setDesiredState(0.0, 0.0);
+    }
+  })
+  .whenCanceled(()->{
+    for (SwerveModule module : m_modules){
+      module.setDesiredState(0.0, 0.0);
+    }
+  })
+  .named("Drive Distance");
+}
 }

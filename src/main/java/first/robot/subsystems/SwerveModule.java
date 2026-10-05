@@ -99,7 +99,9 @@ public class SwerveModule {
    * ====== NEXT LESSON: ADD CODE HERE ======
    * Add resetDrivePosition: zero the drive encoder, so distance is measured from here.
    */
-
+  public void resetDrivePosition() {
+    m_driveMotor.setPosition(0.0);
+  }
   /** Keeps 'value' between 'min' and 'max'. */
   private double clamp(double value, double min, double max) {
     if (value > max) {
