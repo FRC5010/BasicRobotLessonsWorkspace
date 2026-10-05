@@ -71,6 +71,14 @@ public class SwerveModule {
         m_steerEncoder.getAbsolutePosition().getValue().in(Rotations) * SteerConstants.kSteerGearRatio);
   }
 
+  /**
+   * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
+   * Take a SwerveModuleVelocity — a speed in meters per second plus an angle — instead
+   * of two bare numbers. Wrap the steering error with MathUtil.inputModulus instead of
+   * the two while loops, and turn the speed into a fraction of max speed before
+   * applying the cosine scale.
+   */
+
   /** One tick of control: steer toward 'angleDegrees', drive at 'speedFraction'. */
   public void setDesiredState(double angleDegrees, double speedFraction) {
     // Steering P control (same math as Lesson 5, with the wrap trick).
@@ -84,24 +92,17 @@ public class SwerveModule {
     double steerOutput = clamp(SteerConstants.kP * error, -1.0, 1.0);
     m_steerMotor.setThrottle(steerOutput);
 
-    /**
-     * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
-     * Drive only as hard as the wheel is pointed the right way: multiply the speed by
-     * the cosine of the steering error, so a wheel that's still turning doesn't push
-     * the robot sideways.
-     */
-
-    // Drive: pass the commanded speed straight through.
-    m_driveMotor.setThrottle(speedFraction);
+    // Drive only as much as the wheel is pointed the right way:
+    // cos(0°) = 1 → full speed; cos(90°) = 0 → don't drive while sideways.
+    double alignment = Math.cos(Math.toRadians(error));
+    m_driveMotor.setThrottle(speedFraction * alignment);
   }
 
-  /**
-   * ====== NEXT LESSON: ADD CODE HERE ======
-   * Add resetDrivePosition: zero the drive encoder, so distance is measured from here.
-   */
+  /** Zero the drive encoder — start measuring distance from *here*. */
   public void resetDrivePosition() {
-    m_driveMotor.setPosition(0.0);
+    m_driveMotor.setPosition(0);
   }
+
   /** Keeps 'value' between 'min' and 'max'. */
   private double clamp(double value, double min, double max) {
     if (value > max) {

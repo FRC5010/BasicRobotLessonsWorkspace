@@ -1,32 +1,19 @@
 package first.robot.commands;
 
-import static org.wpilib.units.Units.Seconds;
-
-import java.util.function.Function;
-
 import org.wpilib.command3.Command;
 
 import first.robot.subsystems.Drivetrain;
 
-public class Autos {
+public final class Autos {
+  private Autos() {} // utility class — never instantiated
 
-    public static Command driveTurnDrive(Drivetrain drivetrain) {
-        return Command.sequence(
-            drivetrain.driveDistance(1.0),
-            drivetrain.turnToHeading(90),
-            drivetrain.driveDistance(1.0)
-        )
-        .named ("Drive-Turn-Drive");
-    }
-
-    public static Command driveTurnDriveCoroutine(Drivetrain drivetrain, double meters){
-        return Command.noRequirements(coroutine -> {
-            for (int i = 0; i<4; i++){
-            coroutine.await(drivetrain.driveDistance(meters));
-            coroutine.wait(Seconds.of(1.0));
-            coroutine.await(drivetrain.turnToHeading(90));
-            }
+  /** Drive 1 m, turn to 90°, drive 1 m more. */
+  public static Command driveTurnDrive(Drivetrain drivetrain) {
+    return Command.noRequirements(coroutine -> {
+          coroutine.await(drivetrain.driveDistance(1.0));  // step 1: forward 1 meter
+          coroutine.await(drivetrain.turnToHeading(90));   // step 2: face 90°
+          coroutine.await(drivetrain.driveDistance(1.0));  // step 3: forward 1 meter
         })
         .named("Drive Turn Drive");
-    }
+  }
 }
