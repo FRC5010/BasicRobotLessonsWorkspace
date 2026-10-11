@@ -4,10 +4,15 @@
 
 package first.robot;
 
-import org.wpilib.framework.RobotBase;
-import org.wpilib.math.geometry.Translation2d;
+import static org.wpilib.units.Units.MetersPerSecond;
+import static org.wpilib.units.Units.RotationsPerSecond;
 
 import com.ctre.phoenix6.signals.InvertedValue;
+
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.units.measure.AngularVelocity;
+import org.wpilib.units.measure.LinearVelocity;
+import org.wpilib.framework.RobotBase;
 
 public final class Constants {
   // Added by Try It #4: one CAN ID + one magnet offset per corner, all named,
@@ -46,6 +51,14 @@ public final class Constants {
     public static final Translation2d kFrontRight = new Translation2d( kHalfLength, -kHalfWidth);
     public static final Translation2d kBackLeft   = new Translation2d(-kHalfLength,  kHalfWidth);
     public static final Translation2d kBackRight  = new Translation2d(-kHalfLength, -kHalfWidth);
+
+    // Kraken X60 free speed ≈ 6000 RPM = 100 rotations/sec. Divide by the gear
+    // ratio, multiply by circumference → meters/sec. About 4.7 m/s for our numbers.
+    public static final LinearVelocity kMaxSpeed =
+        MetersPerSecond.of(100.0 / kDriveGearRatio * kWheelCircumferenceMeters);
+
+    // How fast the chassis may spin at full stick — one full rotation per second.
+    public static final AngularVelocity kMaxAngularSpeed = RotationsPerSecond.of(1.0);
   }
 
   public static final class SteerConstants {
