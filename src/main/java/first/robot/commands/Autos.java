@@ -1,27 +1,19 @@
 package first.robot.commands;
 
+import org.wpilib.command3.Command;
+
+import first.robot.subsystems.Drivetrain;
+
 public final class Autos {
-    private Autos() {} //utility class, never instantiated
+  private Autos() {} // utility class — never instantiated
 
-    public static Command driveTurnDrive(Drivetrain drivetrain) {
-        return Command.sequence(
-            drivetrain.driveDistance(1.0),
-            drivetrain.turnToHeading(90),
-            drivetrain.driveDistance(1.0))
-            .named("Drive Turn Drive");
-
-    }
-
-    //different way of writing the same command above, using a coroutine instead of a sequence. The coroutine version is more flexible and can be easier to read.
-    public static Command driveTurnDriveWithCoroutine(Drivetrain drivetrain) {
-        return Command.noRequirements(coroutine -> {
-            coroutine.await(drivetrain.driveDistance(1.0));
-            coroutine.wait(Seconds.of(1.0));
-            coroutine.await(drivetrain.turnToHeading(90));
-            coroutine.await(drivetrain.driveDistance(1.0));
+  /** Drive 1 m, turn to 90°, drive 1 m more. */
+  public static Command driveTurnDrive(Drivetrain drivetrain) {
+    return Command.noRequirements(coroutine -> {
+          coroutine.await(drivetrain.driveDistance(1.0));  // step 1: forward 1 meter
+          coroutine.await(drivetrain.turnToHeading(90));   // step 2: face 90°
+          coroutine.await(drivetrain.driveDistance(1.0));  // step 3: forward 1 meter
         })
         .named("Drive Turn Drive");
-    }
-
-
+  }
 }
