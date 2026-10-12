@@ -1,6 +1,5 @@
 package first.robot.subsystems;
 
-import static org.wpilib.units.Units.MetersPerSecond;
 import static org.wpilib.units.Units.Rotations;
 import static org.wpilib.units.Units.RotationsPerSecond;
 
@@ -13,10 +12,8 @@ import com.ctre.phoenix6.sim.TalonFXSimState;
 import org.wpilib.hardware.bus.CANPort;
 
 import org.wpilib.math.geometry.Translation2d;
-import org.wpilib.math.kinematics.SwerveModuleVelocity;
 import org.wpilib.math.system.DCMotor;
 import org.wpilib.math.system.Models;
-import org.wpilib.math.util.MathUtil;
 import org.wpilib.simulation.DCMotorSim;
 import org.wpilib.system.RobotController;
 
@@ -74,18 +71,31 @@ public class SwerveModule {
         m_steerEncoder.getAbsolutePosition().getValue().in(Rotations) * SteerConstants.kSteerGearRatio);
   }
 
-  /** One tick of control: chase the given state. */
-  public void setDesiredState(SwerveModuleVelocity state) {
-    // Steering: the same P control, error wrapped to ±180° in one call now.
-    double error = MathUtil.inputModulus(
-        state.angle.getDegrees() - getSteerAngleDegrees(), -180, 180);
+  /**
+   * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
+   * Take a SwerveModuleVelocity — a speed in meters per second plus an angle — instead
+   * of two bare numbers. Wrap the steering error with MathUtil.inputModulus instead of
+   * the two while loops, and turn the speed into a fraction of max speed before
+   * applying the cosine scale.
+   */
+
+  /** One tick of control: steer toward 'angleDegrees', drive at 'speedFraction'. */
+  public void setDesiredState(double angleDegrees, double speedFraction) {
+    // Steering P control (same math as Lesson 5, with the wrap trick).
+    double error = angleDegrees - getSteerAngleDegrees();
+    while (error > 180) {
+      error -= 360;
+    }
+    while (error < -180) {
+      error += 360;
+    }
     double steerOutput = clamp(SteerConstants.kP * error, -1.0, 1.0);
     m_steerMotor.setThrottle(steerOutput);
 
-    // Drive: meters per second → fraction of max, with the cosine scale.
+    // Drive only as much as the wheel is pointed the right way:
+    // cos(0°) = 1 → full speed; cos(90°) = 0 → don't drive while sideways.
     double alignment = Math.cos(Math.toRadians(error));
-    double fraction = state.velocity / DriveConstants.kMaxSpeed.in(MetersPerSecond);
-    m_driveMotor.setThrottle(fraction * alignment);
+    m_driveMotor.setThrottle(speedFraction * alignment);
   }
 
   /** Zero the drive encoder — start measuring distance from *here*. */
@@ -125,12 +135,6 @@ public class SwerveModule {
     return wheelRps * DriveConstants.kWheelCircumferenceMeters;
   }
 
-  /**
-   * ====== NEXT LESSON: ADD CODE HERE ======
-   * Add getPosition: package how far this wheel has rolled and which way it's pointing
-   * into a SwerveModulePosition — the one reading odometry needs from each module.
-   */
-
   /** Advances the physics model by one tick. Only ever called in simulation. */
   public void simulatePeriodic() {
     // Drive motor: model reports wheel motion, convert back to rotor-side.
@@ -150,5 +154,10 @@ public class SwerveModule {
         m_steerModel.getAngularPosition() / (2 * Math.PI) * SteerConstants.kSteerGearRatio);
     m_steerSim.setRotorVelocity(
         m_steerModel.getAngularVelocity() / (2 * Math.PI) * SteerConstants.kSteerGearRatio);
+  }
+
+  public SwerveModulePosition getPosition() {
+    return new SwerveModulePosition(
+      getDistanceMetres(), Rotation2d.fromDegrees(getSteerAngleDegrees()));
   }
 }

@@ -7,7 +7,6 @@ package first.robot.opmode;
 import org.wpilib.opmode.PeriodicOpMode;
 import org.wpilib.opmode.Teleop;
 
-import first.robot.Constants.DriveConstants;
 import first.robot.Robot;
 
 @Teleop
@@ -18,17 +17,20 @@ public class RobotTeleop extends PeriodicOpMode {
   public RobotTeleop(Robot robot) {
     this.robot = robot;
 
-    // Classic swerve default: left stick translates (field-relative), right
-    // stick rotates.
-    robot.drivetrain.setDefaultCommand(
-        robot.drivetrain.driveFieldRelative(
-            () -> DriveConstants.kMaxSpeed.times(-robot.driverController.getLeftY()),  // forward = +X
-            () -> DriveConstants.kMaxSpeed.times(-robot.driverController.getLeftX()),  // left    = +Y
-            () -> DriveConstants.kMaxAngularSpeed.times(-robot.driverController.getRightX())));
+    /**
+     * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
+     * Replace the translate default and both bumper rotate bindings with one default
+     * command that drives field-relative: the left stick translates, the right stick
+     * rotates. Scale each stick's fraction up to a real speed by multiplying the max-
+     * speed measure, negating so stick forward is +X and stick left is +Y. The turn-to-
+     * heading bindings stay.
+     */
 
-    // Tap the bottom face button to turn and face 90°; the right face button for 0°.
-    robot.driverController.faceDown().onTrue(robot.drivetrain.turnToHeading(90));
-    robot.driverController.faceRight().onTrue(robot.drivetrain.turnToHeading(0));
+    // Left stick translates by default; bumpers spin in place.
+    robot.drivetrain.setDefaultCommand(robot.drivetrain.drive(
+      () -> DriveConstants.kMaxSpeed.times(-robot.driverController.getLeftY()),
+      () -> DriveConstants.kMaxSpeed.times(-robot.driverController.getLeftX()),
+      () -> DriveConstants.kMaxAngularSpeed.times(-robot.driverController.getRightX())));
   }
 
   @Override
