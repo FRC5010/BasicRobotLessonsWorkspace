@@ -58,9 +58,23 @@ public final class Constants {
 
     // How fast the chassis may spin at full stick — one full rotation per second.
     public static final AngularVelocity kMaxAngularSpeed = RotationsPerSecond.of(1.0);
+
+    /**
+     * ====== NEXT LESSON: ADD CODE HERE ======
+     * Add the drive motor's model and trim for firmware velocity control: kV, in volts
+     * per wheel rotation per second — the voltage that holds a speed with no error at
+     * all — and a small kP to correct whatever the model misses.
+     */
   }
 
   public static final class SteerConstants {
+    /**
+     * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
+     * The software steering gain retires; the motor's firmware runs the steering loop
+     * from now on. Keep the gear ratio — it now reads as rotor to CANcoder — and add a
+     * firmware P gain in volts per rotation of error.
+     */
+
     public static final double kP = 0.0005;          // from Lesson 5 — retune once the real gearing lands
     public static final double kSteerGearRatio = 25.0; // rotor : steering
     public static final InvertedValue kSteerInverted = InvertedValue.CounterClockwise_Positive; // flip if your steering counts backward
