@@ -45,6 +45,14 @@ public final class Constants {
     public static final Translation2d kFrontRight = new Translation2d( kHalfLength, -kHalfWidth);
     public static final Translation2d kBackLeft   = new Translation2d(-kHalfLength,  kHalfWidth);
     public static final Translation2d kBackRight  = new Translation2d(-kHalfLength, -kHalfWidth);
+
+    /**
+     * ====== NEXT LESSON: ADD CODE HERE ======
+     * Add the chassis's top speeds as Units measures: a max linear speed worked out
+     * from the Kraken's free speed — about 100 rotations per second — divided by the
+     * gear ratio and multiplied by the wheel's circumference, and a max angular speed
+     * of one rotation per second.
+     */
   }
 
   public static final class SteerConstants {
