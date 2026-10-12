@@ -64,6 +64,28 @@ public class Drivetrain implements Mechanism {
     return runRepeatedly(() -> commandRotation(omega)).named("Rotate");
   }
 
+  public Command driveDistance(double meters) {
+    return run(coroutine -> {
+      m_modules[0].resetDrivePosition();
+      while (Math.abs(m_modules[0].getDistanceMeters()) < Math.abs(meters)) {
+        for (SwerveModule module : m_modules) {
+            module.setDesiredState(0.0, 0.4);
+        }
+        m_lastCommandedOmega = 0.0;
+        coroutine.yield();
+      }
+      for (SwerveModule module : m_modules) {
+        module.setDesiredState(0.0, 0.0);
+      }
+    })
+    .whenCanceled(() -> {
+      for (SwerveModule module : m_modules) {
+        module.setDesiredState(0.0, 0.0);
+      }
+    })
+    .named("Drive Distance");
+  }
+
   /** Turn to face 'targetDegrees'. Finishes when within 2°. */
   public Command turnToHeading(double targetDegrees) {
     return run(coroutine -> {

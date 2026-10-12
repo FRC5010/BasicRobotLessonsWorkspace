@@ -118,6 +118,10 @@ public class SwerveModule {
     return steerRotations * 360.0;
   }
 
+  public void resetDrivePosition() {
+    m_driveMotor.setPosition(0);
+  }
+
   /** How far this module's wheel has driven, in meters, since the last reset. */
   public double getDistanceMeters() {
     double rotorRotations = m_driveMotor.getPosition().getValue().in(Rotations);
