@@ -1,3 +1,4 @@
+//://frcsoftware.org/learning-course/https
 package first.robot.subsystems;
 
 import static org.wpilib.units.Units.Degrees;
@@ -35,13 +36,6 @@ public class Drivetrain implements Mechanism {
           DriveConstants.kBackRight)
   };
 
-  /**
-   * ====== NEXT LESSON: ADD CODE HERE ======
-   * Build a SwerveDriveKinematics from the four modules' locations, in the same corner
-   * order as the array. It does the math that turns one motion of the whole chassis
-   * into four wheel states.
-   */
-
   private final Pigeon2 m_gyro = new Pigeon2(DriveConstants.kGyroPort, new CANBus(CANPort.CAN_S0));
 
   // Remembered for the sim: what rotation rate did we just command?
@@ -51,17 +45,6 @@ public class Drivetrain implements Mechanism {
   public Drivetrain() {
     Scheduler.getDefault().addPeriodic(this::logTelemetry);
   }
-
-  /**
-   * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
-   * Kinematics replaces both translate and rotate. Put the four steps every way of
-   * driving shares into one private helper: convert a chassis velocity into module
-   * states, desaturate them so no wheel is asked past max speed, optimize each against
-   * its current angle, and command it — recording the rotation rate for the sim and
-   * logging the desired states. Then add drive, which calls the helper every tick from
-   * three Units suppliers, and driveFieldRelative, which first rotates field-relative
-   * speeds into the robot's frame using the gyro heading.
-   */
 
   /** Drive the whole chassis at fractional velocity (vx, vy). */
   public Command translate(DoubleSupplier vxSupplier, DoubleSupplier vySupplier) {
@@ -99,41 +82,46 @@ public class Drivetrain implements Mechanism {
   }
 
   /**
-   * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
-   * setDesiredState now takes a module state instead of two numbers: drive with a state
-   * at 40% of max speed pointed at 0°, and stop with an empty, zero-speed state.
-   */
-
-  /** Drive straight forward 'meters' at 40% power. Finishes on its own. */
-  public Command driveDistance(double meters) {
-    return run(coroutine -> {
-          m_modules[0].resetDrivePosition(); // zero one wheel's odometer
-          while (Math.abs(m_modules[0].getDistanceMeters()) < Math.abs(meters)) {
-            for (SwerveModule module : m_modules) {
-              module.setDesiredState(0.0, 0.4); // point forward, 40% throttle
-            }
-            m_lastCommandedOmega = 0.0;
-            coroutine.yield();
-          }
-          for (SwerveModule module : m_modules) {
-            module.setDesiredState(0.0, 0.0); // reached it — stop
-          }
-        })
-        .whenCanceled(() -> {
-          for (SwerveModule module : m_modules) {
-            module.setDesiredState(0.0, 0.0); // interrupted — stop
-          }
-        })
-        .named("Drive Distance");
-  }
-
-  /**
-   * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
-   * Rebuild this on the new helper: turn the rotation rate, in revolutions per second,
-   * into a chassis velocity with no translation, and let the helper do the rest.
+   * ====== NEXT LESSON: ADD CODE HERE ======
+   * Add a whole-chassis driveDistance: zero one wheel's drive encoder, drive all four
+   * wheels straight forward at 40% power until that wheel has covered the distance,
+   * then stop — and stop if canceled, too.
    */
 
   /** One tick of pure rotation: steer every wheel tangent to the circle. */
+
+public Command driveDistance(double meters) {
+  return run(coroutine -> {
+    m_modules[0].resetDriveEncoder(); // Reset the front-left module's drive encoder
+
+    while (m_modules[0].getDriveDistanceMeters() < meters) {
+      commandRotation(0.0); // No rotation, just drive straight
+      for (SwerveModule module : m_modules) {
+        module.setDesiredState(0.0, 0.4); // Drive straight at 40% power
+      }
+      coroutine.yield(); // Yield control to allow other commands to run
+    }
+
+    commandRotation(0.0); // Stop rotation
+    for (SwerveModule module : m_modules) {
+      module.setDesiredState(0.0, 0.0); // Stop all modules
+    }
+  }).whenCanceled(() -> {
+    commandRotation(0.0); // Stop rotation if canceled
+    for (SwerveModule module : m_modules) {
+      module.setDesiredState(0.0, 0.0); // Stop all modules if canceled
+    }
+  })
+  .whenCanceled(() -> {
+    commandRotation(0.0); // Stop rotation if canceled
+    for (SwerveModule module : m_modules) {
+      module.setDesiredState(0.0, 0.0); // Stop all modules if canceled
+    }
+  })
+  .named("Drive Distance");
+}
+
+
   private void commandRotation(double omega) {
     m_lastCommandedOmega = omega;
     for (SwerveModule module : m_modules) {
@@ -143,12 +131,6 @@ public class Drivetrain implements Mechanism {
       module.setDesiredState(angleDeg, omega);
     }
   }
-
-  /**
-   * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
-   * Replace the two wrap loops with MathUtil.inputModulus, which wraps the error into
-   * ±180° in one call.
-   */
 
   /** Signed error to 'target' in degrees, wrapped to (-180, 180]. */
   private double headingError(double targetDegrees) {

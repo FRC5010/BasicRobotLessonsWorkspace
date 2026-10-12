@@ -4,34 +4,56 @@
 
 package first.robot.opmode;
 
-import org.wpilib.command3.button.RobotModeTriggers;
 import org.wpilib.opmode.Autonomous;
 import org.wpilib.opmode.PeriodicOpMode;
 
 import first.robot.Robot;
-import first.robot.commands.Autos;
 
-@Autonomous(name = "Drive Turn Drive", group = "Group 1")
+/**
+ * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
+ * Rename this opmode to RobotAuto, and have the Driver Station list it under the name
+ * of the routine it runs.
+ */
+
+@Autonomous(name = "My Auto", group = "Group 1")
 public class RobotAuto extends PeriodicOpMode {
   private final Robot robot;
+
+  /**
+   * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
+   * Rename the constructor to RobotAuto too — a constructor always has its class's
+   * name.
+   */
 
   /** The Robot instance is passed into the opmode via the constructor. */
   public RobotAuto(Robot robot) {
     this.robot = robot;
 
-    // Fires once, the moment this opmode goes from disabled to enabled.
+    /**
+     * ====== NEXT LESSON: ADD CODE HERE ======
+     * Schedule the autonomous routine exactly once, the moment this opmode is enabled:
+     * bind the drive-turn-drive sequence to the autonomous-mode trigger with onTrue.
+     * Binding it here, in the constructor, scopes it to this opmode, the same as every
+     * button binding.
+     */
     RobotModeTriggers.autonomous().onTrue(Autos.driveTurnDrive(robot.drivetrain));
   }
 
-  // From Lesson 0's Try It #1: print a message once, on enable, the same
-  // way RobotTeleop does.
+  // Added by Lesson 0's Try It #1: print a message once, on enable, the same
+  // way MyTeleop does.
   @Override
   public void start() {
     System.out.println("Hello from Team 5010! Auto started.");
   }
 
+  /*
+   * This method runs periodically, using the same period as the Robot instance.
+   *
+   * Additional periodic methods may be configured with addPeriodic(),
+   * which can have periods that differ from the main Robot instance.
+   */
   @Override
   public void periodic() {
-    /* Called periodically (set time interval) while the robot is enabled. */
+    // Put custom auto code here
   }
 }
