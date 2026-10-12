@@ -17,7 +17,7 @@ import first.robot.Robot;
  */
 
 @Teleop
-public class MyTeleop extends PeriodicOpMode {
+public class RobotTeleop extends PeriodicOpMode {
   private final Robot robot;
 
   /**
@@ -27,7 +27,7 @@ public class MyTeleop extends PeriodicOpMode {
    */
 
   /** The Robot instance is passed into the opmode via the constructor. */
-  public MyTeleop(Robot robot) {
+  public RobotTeleop(Robot robot) {
     this.robot = robot;
 
     // Left stick translates by default; bumpers spin in place.
