@@ -3,6 +3,7 @@ package first.robot.subsystems;
 import static org.wpilib.units.Units.Degrees;
 
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.hardware.Pigeon2;
@@ -12,8 +13,13 @@ import org.wpilib.command3.Mechanism;
 import org.wpilib.command3.Scheduler;
 import org.wpilib.hardware.bus.CANPort;
 import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.kinematics.SwerveDriveKinematics;
 import org.wpilib.math.kinematics.SwerveModuleVelocity;
+import org.wpilib.math.util.MathUtil;
 import org.wpilib.telemetry.Telemetry;
+import org.wpilib.units.measure.AngularVelocity;
+import org.wpilib.units.measure.LinearVelocity;
 
 import first.robot.Constants.DriveConstants;
 import first.robot.Constants.HeadingConstants;
@@ -42,6 +48,12 @@ public class Drivetrain implements Mechanism {
    * into four wheel states.
    */
 
+  private final SwerveDriveKinematics m_kinematics = new SwerveDriveKinematics(
+    m_modules[0].location, 
+    m_modules[1].location,
+    m_modules[2].location,
+    m_modules[3].location);
+
   private final Pigeon2 m_gyro = new Pigeon2(DriveConstants.kGyroPort, new CANBus(CANPort.CAN_S0));
 
   // Remembered for the sim: what rotation rate did we just command?
@@ -64,23 +76,8 @@ public class Drivetrain implements Mechanism {
    */
 
   /** Drive the whole chassis at fractional velocity (vx, vy). */
-  public Command translate(DoubleSupplier vxSupplier, DoubleSupplier vySupplier) {
-    return runRepeatedly(() -> {
-      double vx = vxSupplier.getAsDouble();
-      double vy = vySupplier.getAsDouble();
-      double speed = Math.hypot(vx, vy);                        // vector length
-      double angleDeg = Math.toDegrees(Math.atan2(vy, vx));     // vector angle
-      m_lastCommandedOmega = 0.0;                                // pure translation: no rotation
-      for (SwerveModule module : m_modules) {
-        module.setDesiredState(angleDeg, speed);
-      }
-    }).named("Translate");
-  }
 
   /** Spin in place at fractional angular rate 'omega' (positive = CCW). */
-  public Command rotate(double omega) {
-    return runRepeatedly(() -> commandRotation(omega)).named("Rotate");
-  }
 
   /** Turn to face 'targetDegrees'. Finishes when within 2°. */
   public Command turnToHeading(double targetDegrees) {
@@ -110,18 +107,19 @@ public class Drivetrain implements Mechanism {
           m_modules[0].resetDrivePosition(); // zero one wheel's odometer
           while (Math.abs(m_modules[0].getDistanceMeters()) < Math.abs(meters)) {
             for (SwerveModule module : m_modules) {
-              module.setDesiredState(0.0, 0.4); // point forward, 40% throttle
+              module.setDesiredState(new SwerveModuleVelocity(
+                DriveConstants.kMaxSpeed.times(0.4), Rotation2d.fromDegrees(0))); // point forward, 40% throttle
             }
             m_lastCommandedOmega = 0.0;
             coroutine.yield();
           }
           for (SwerveModule module : m_modules) {
-            module.setDesiredState(0.0, 0.0); // reached it — stop
+            module.setDesiredState(new SwerveModuleVelocity()); // reached it — stop
           }
         })
         .whenCanceled(() -> {
           for (SwerveModule module : m_modules) {
-            module.setDesiredState(0.0, 0.0); // interrupted — stop
+            module.setDesiredState(new SwerveModuleVelocity()); // interrupted — stop
           }
         })
         .named("Drive Distance");
@@ -134,14 +132,37 @@ public class Drivetrain implements Mechanism {
    */
 
   /** One tick of pure rotation: steer every wheel tangent to the circle. */
-  private void commandRotation(double omega) {
-    m_lastCommandedOmega = omega;
-    for (SwerveModule module : m_modules) {
-      double x = module.location.getX();
-      double y = module.location.getY();
-      double angleDeg = Math.toDegrees(Math.atan2(x, -y));
-      module.setDesiredState(angleDeg, omega);
+
+  public Command driveFieldRelative(
+    Supplier<LinearVelocity> vx, Supplier<LinearVelocity> vy, Supplier<AngularVelocity> omega) {
+      return runRepeatedly(() -> {
+        ChassisVelocities fieldSpeeds = new ChassisVelocities(vx.get(), vy.get(), omega.get());
+        Rotation2d heading = Rotation2d.fromDegrees(getHeadingDegrees());
+        applyChassisSpeeds(fieldSpeeds.toRobotRelative(heading));
+      }).named("Drive Field Relative");
     }
+
+
+  private void applyChassisSpeeds(ChassisVelocities speeds) {
+    SwerveModuleVelocity[] states = m_kinematics.toSwerveModuleVelocities(speeds);
+
+    states = SwerveDriveKinematics.desaturateWheelVelocities(states, DriveConstants.kMaxSpeed);
+    m_lastCommandedOmega = speeds.omega / (2 * Math.PI);
+
+    for (int i = 0; i < m_modules.length; i++) {
+      states[i] = states[i].optimize(Rotation2d.fromDegrees(m_modules[i].getSteerAngleDegrees()));
+      m_modules[i].setDesiredState(states[i]);
+    }
+    Telemetry.log("Drivetrain/DesiredModuleStates", states, SwerveModuleVelocity.struct);
+  }
+
+  public Command drive(
+    Supplier<LinearVelocity> vx, Supplier<LinearVelocity> vy, Supplier<AngularVelocity> omega) {
+      return runRepeatedly(() -> applyChassisSpeeds(new ChassisVelocities(vx.get(), vy.get(), omega.get()))).named("Drive");
+  }
+
+  private void commandRotation(double omegaRevPerSec) {
+    applyChassisSpeeds(new ChassisVelocities(0, 0, omegaRevPerSec * 2 * Math.PI));
   }
 
   /**
@@ -152,14 +173,7 @@ public class Drivetrain implements Mechanism {
 
   /** Signed error to 'target' in degrees, wrapped to (-180, 180]. */
   private double headingError(double targetDegrees) {
-    double error = targetDegrees - getHeadingDegrees();
-    while (error > 180) {
-      error -= 360;
-    }
-    while (error < -180) {
-      error += 360;
-    }
-    return error;
+    return MathUtil.inputModulus(targetDegrees - getHeadingDegrees(), -180, 180);
   }
 
   /** Keeps 'value' between 'min' and 'max'. */

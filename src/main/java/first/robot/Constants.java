@@ -6,7 +6,13 @@ package first.robot;
 
 import com.ctre.phoenix6.signals.InvertedValue;
 
+import static org.wpilib.units.Units.MetersPerSecond;
+import static org.wpilib.units.Units.RotationsPerSecond;
+
 import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.kinematics.SwerveDriveKinematics;
+import org.wpilib.units.measure.AngularVelocity;
+import org.wpilib.units.measure.LinearVelocity;
 
 public final class Constants {
   // Added by Try It #4: one CAN ID + one magnet offset per corner, all named,
@@ -45,6 +51,9 @@ public final class Constants {
     public static final Translation2d kFrontRight = new Translation2d( kHalfLength, -kHalfWidth);
     public static final Translation2d kBackLeft   = new Translation2d(-kHalfLength,  kHalfWidth);
     public static final Translation2d kBackRight  = new Translation2d(-kHalfLength, -kHalfWidth);
+
+    public static final LinearVelocity kMaxSpeed = MetersPerSecond.of(100.0 / kDriveGearRatio * kWheelCircumferenceMeters);
+    public static final AngularVelocity kMaxAngularSpeed = RotationsPerSecond.of(1.0);
 
     /**
      * ====== NEXT LESSON: ADD CODE HERE ======

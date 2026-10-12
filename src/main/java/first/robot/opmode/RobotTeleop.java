@@ -8,6 +8,7 @@ import org.wpilib.opmode.PeriodicOpMode;
 import org.wpilib.opmode.Teleop;
 
 import first.robot.Robot;
+import first.robot.Constants.DriveConstants;
 
 @Teleop
 public class RobotTeleop extends PeriodicOpMode {
@@ -28,12 +29,10 @@ public class RobotTeleop extends PeriodicOpMode {
 
     // Left stick translates by default; bumpers spin in place.
     robot.drivetrain.setDefaultCommand(
-        robot.drivetrain.translate(
-            () -> -robot.driverController.getLeftY(),   // forward = +X
-            () -> -robot.driverController.getLeftX())); // left    = +Y
-
-    robot.driverController.leftBumper().whileTrue(robot.drivetrain.rotate(0.3));
-    robot.driverController.rightBumper().whileTrue(robot.drivetrain.rotate(-0.3));
+        robot.drivetrain.drive(
+            () -> DriveConstants.kMaxSpeed.times(-robot.driverController.getLeftY()),   // forward = +X
+            () -> DriveConstants.kMaxSpeed.times(-robot.driverController.getLeftX()),
+            () -> DriveConstants.kMaxAngularSpeed.times(-robot.driverController.getRightX()))); // left    = +Y
 
     // Tap the bottom face button to turn and face 90°; the right face button for 0°.
     robot.driverController.faceDown().onTrue(robot.drivetrain.turnToHeading(90));
