@@ -8,6 +8,7 @@ import org.wpilib.opmode.PeriodicOpMode;
 import org.wpilib.opmode.Teleop;
 
 import first.robot.Robot;
+import first.robot.Constants.DriveConstants;
 
 @Teleop
 public class RobotTeleop extends PeriodicOpMode {

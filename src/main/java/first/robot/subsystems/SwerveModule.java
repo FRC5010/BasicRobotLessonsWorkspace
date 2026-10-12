@@ -1,7 +1,19 @@
 package first.robot.subsystems;
 
+import static org.wpilib.units.Units.MetersPerSecond;
 import static org.wpilib.units.Units.Rotations;
 import static org.wpilib.units.Units.RotationsPerSecond;
+
+import org.wpilib.hardware.bus.CANPort;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.kinematics.SwerveModulePosition;
+import org.wpilib.math.kinematics.SwerveModuleVelocity;
+import org.wpilib.math.system.DCMotor;
+import org.wpilib.math.system.Models;
+import org.wpilib.math.util.MathUtil;
+import org.wpilib.simulation.DCMotorSim;
+import org.wpilib.system.RobotController;
 
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
@@ -9,13 +21,6 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.TalonFXSimState;
-import org.wpilib.hardware.bus.CANPort;
-
-import org.wpilib.math.geometry.Translation2d;
-import org.wpilib.math.system.DCMotor;
-import org.wpilib.math.system.Models;
-import org.wpilib.simulation.DCMotorSim;
-import org.wpilib.system.RobotController;
 
 import first.robot.Constants.DriveConstants;
 import first.robot.Constants.SteerConstants;
@@ -80,22 +85,14 @@ public class SwerveModule {
    */
 
   /** One tick of control: steer toward 'angleDegrees', drive at 'speedFraction'. */
-  public void setDesiredState(double angleDegrees, double speedFraction) {
-    // Steering P control (same math as Lesson 5, with the wrap trick).
-    double error = angleDegrees - getSteerAngleDegrees();
-    while (error > 180) {
-      error -= 360;
-    }
-    while (error < -180) {
-      error += 360;
-    }
+  public void setDesiredState(SwerveModuleVelocity state) {
+    double error = MathUtil.inputModulus(
+      state.angle.getDegrees() - getSteerAngleDegrees(), -180, 180);
     double steerOutput = clamp(SteerConstants.kP * error, -1.0, 1.0);
-    m_steerMotor.setThrottle(steerOutput);
+      m_steerMotor.setThrottle(steerOutput);
 
-    // Drive only as much as the wheel is pointed the right way:
-    // cos(0°) = 1 → full speed; cos(90°) = 0 → don't drive while sideways.
-    double alignment = Math.cos(Math.toRadians(error));
-    m_driveMotor.setThrottle(speedFraction * alignment);
+      double alignment = Math.cos(Math.toRadians(error));
+      double fraction = state.velocity / DriveConstants.kMaxSpeed.in(MetersPerSecond);
   }
 
   /** Zero the drive encoder — start measuring distance from *here*. */
@@ -158,6 +155,6 @@ public class SwerveModule {
 
   public SwerveModulePosition getPosition() {
     return new SwerveModulePosition(
-      getDistanceMetres(), Rotation2d.fromDegrees(getSteerAngleDegrees()));
+      getDistanceMeters(), Rotation2d.fromDegrees(getSteerAngleDegrees()));
   }
 }
