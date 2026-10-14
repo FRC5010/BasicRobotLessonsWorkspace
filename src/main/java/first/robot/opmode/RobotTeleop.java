@@ -29,6 +29,11 @@ public class RobotTeleop extends PeriodicOpMode {
     // Tap the bottom face button to turn and face 90°; the right face button for 0°.
     robot.driverController.faceDown().onTrue(robot.drivetrain.turnToHeading(90));
     robot.driverController.faceRight().onTrue(robot.drivetrain.turnToHeading(0));
+
+    /**
+     * ====== NEXT LESSON: ADD CODE HERE ======
+     * Bind three D-pad directions to send the elevator to its three preset heights.
+     */
   }
 
   @Override

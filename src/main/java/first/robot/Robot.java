@@ -12,7 +12,13 @@ import org.wpilib.framework.OpModeRobot;
 import org.wpilib.telemetry.Telemetry;
 import org.wpilib.system.DataLogManager;
 
+import first.robot.Constants.DriveConstants;
+import first.robot.Constants.VisionConstants;
+import first.robot.commands.Autos;
 import first.robot.subsystems.Drivetrain;
+import first.robot.subsystems.LimelightPoseProvider;
+import first.robot.subsystems.Localizer;
+import frc.robot.lib.BLine.commands.FollowPath;
 
 /**
  * The methods in this class are called automatically as described in the OpModeRobot documentation.
@@ -27,6 +33,22 @@ public class Robot extends OpModeRobot {
   // they're selected, so they reach in and use these instead of owning them.
   public final CommandGamepad driverController = new CommandGamepad(0);
   public final Drivetrain drivetrain = new Drivetrain();
+  // Localizer reads the drivetrain's kinematics/rotation/module positions at
+  // construction, so drivetrain must be built first — it already is, above.
+  public final Localizer localizer = new Localizer(drivetrain);
+  // Blank finals: each camera is built and registered with localizer in the
+  // constructor body, below, which runs after every field initializer above.
+  public final LimelightPoseProvider frontCamera;
+  public final LimelightPoseProvider backCamera;
+
+  // How this robot follows a path. It's the same for every path, so it's
+  // built once, here, and every autonomous opmode reaches in and uses it.
+  public final FollowPath.Builder pathBuilder = Autos.makePathBuilder(drivetrain, localizer);
+
+  /**
+   * ====== NEXT LESSON: ADD CODE HERE ======
+   * Add the scoring elevator, built once here like the rest of the robot's hardware.
+   */
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -35,6 +57,22 @@ public class Robot extends OpModeRobot {
   public Robot() {
     DataLogManager.start(); // saves every published value to a .wpilog file
     Scheduler.getDefault().addEventListener(this::logCommandStart);
+    Autos.registerEventTriggers(); // once, for the whole program
+
+    // Vision now checks its simulated eyesight against ground truth, not
+    // against its own guess — the fix Lesson 15 admitted it was missing.
+    frontCamera = LimelightPoseProvider.makeCamera(
+        VisionConstants.kFrontCameraName, VisionConstants.kFrontRobotToCamera, drivetrain::getSimulatedPose);
+    backCamera = LimelightPoseProvider.makeCamera(
+        VisionConstants.kBackCameraName, VisionConstants.kBackRobotToCamera, drivetrain::getSimulatedPose);
+    localizer.addProvider(frontCamera);
+    localizer.addProvider(backCamera);
+
+    // The simulated chassis starts at kSimStartingPose; tell the estimate
+    // where that is instead of guessing from (0, 0, 0°).
+    if (Constants.kCurrentMode == Constants.Mode.SIM) {
+      localizer.resetPose(DriveConstants.kSimStartingPose);
+    }
   }
 
   /** This function is called exactly once when the DS first connects. */
@@ -57,9 +95,7 @@ public class Robot extends OpModeRobot {
 
   /** Runs every tick, but only while the code is running in simulation. */
   @Override
-  public void simulationPeriodic() {
-    drivetrain.simulatePeriodic();
-  }
+  public void simulationPeriodic() {}
 
   /**
    * This function is called periodically anytime when no opmode is selected, including when the

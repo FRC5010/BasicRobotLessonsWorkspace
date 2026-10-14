@@ -9,14 +9,27 @@ import static org.wpilib.units.Units.RotationsPerSecond;
 
 import com.ctre.phoenix6.signals.InvertedValue;
 
+import org.wpilib.fields.Field;
+import org.wpilib.fields.Fields;
+import org.wpilib.framework.RobotBase;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Rotation3d;
+import org.wpilib.math.geometry.Transform3d;
 import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.geometry.Translation3d;
 import org.wpilib.units.measure.AngularVelocity;
 import org.wpilib.units.measure.LinearVelocity;
-import org.wpilib.framework.RobotBase;
 
 public final class Constants {
-  // Added by Try It #4: one CAN ID + one magnet offset per corner, all named,
-  // instead of literals baked into the array in Drivetrain.
+  public enum Mode { REAL, SIM, REPLAY }
+
+  /** Change kSimMode to Mode.REPLAY to re-run a log file instead of simulating fresh. */
+  public static final Mode kSimMode = Mode.SIM;
+  public static final Mode kCurrentMode = RobotBase.isReal() ? Mode.REAL : kSimMode;
+
+  // One CAN ID + one magnet offset per corner, all named, instead of
+  // literals baked into the array in Drivetrain.
   public static final class DriveConstants {
     public static final int kFrontLeftDrivePort = 4;     // CAN IDs — change to yours
     public static final int kFrontLeftSteerPort = 3;
@@ -59,15 +72,75 @@ public final class Constants {
 
     // How fast the chassis may spin at full stick — one full rotation per second.
     public static final AngularVelocity kMaxAngularSpeed = RotationsPerSecond.of(1.0);
+
+    public static final double kDriveKV = 0.8;          // volts per wheel rotation/sec — the model
+    public static final double kDriveKP = 0.1;          // volts per rps of error — the trim
+
+    // How hard the tires can grip, in sim — a Colson-wheel-on-carpet guess.
+    public static final double kWheelCoF = 1.2;
+
+    // a = μg — how hard the chassis can actually accelerate, independent of
+    // mass, because a heavier robot needs proportionally more force to move
+    // and proportionally more grip to supply it.
+    public static final double kMaxAccelMps2 = kWheelCoF * 9.81;
+
+    // The same grip limit, applied at each wheel's distance from center —
+    // a wheel spinning the chassis in place still can't push harder than
+    // the tire allows.
+    public static final double kMaxAngularAccelRadPerSec2 =
+        kMaxAccelMps2 / Math.hypot(kHalfLength, kHalfWidth);
+
+    /** Where the simulated robot is placed on the field at startup. */
+    public static final Pose2d kSimStartingPose = new Pose2d(3, 3, new Rotation2d());
   }
 
   public static final class SteerConstants {
-    public static final double kP = 0.008;          // from Lesson 5 — retune once the real gearing lands
-    public static final double kSteerGearRatio = RobotBase.isSimulation() ? 25 : 1; // rotor : steering
+    public static final double kSteerGearRatio = RobotBase.isSimulation() ? 25 : 1;  // rotor : CANcoder
+    public static final double kSteerKP = 40.0;         // volts per rotation of error — tune
     public static final InvertedValue kSteerInverted = InvertedValue.CounterClockwise_Positive; // flip if your steering counts backward
   }
 
   public static final class HeadingConstants {
     public static final double kP = 0.02; // turn power per degree of heading error
   }
+
+  public static final class VisionConstants {
+    // This season's field: its size, and where every AprilTag sits on it.
+    public static final Field kTagLayout = Field.loadField(Fields.DEFAULT_FIELD);
+
+    // Camera mount positions: robot center → camera lens. Each name must
+    // match the one set in that camera's web UI.
+    public static final String kFrontCameraName = "limelight-front";
+    public static final Transform3d kFrontRobotToCamera = new Transform3d(
+        new Translation3d(0.3, 0.0, 0.2), // 30 cm forward, centered, 20 cm up
+        new Rotation3d(0, 0, 0));         // facing straight forward
+
+    public static final String kBackCameraName = "limelight-back";
+    public static final Transform3d kBackRobotToCamera = new Transform3d(
+        new Translation3d(-0.3, 0.0, 0.2), // 30 cm back, 20 cm up
+        new Rotation3d(0, 0, Math.PI));    // facing straight backward
+
+    // The simulated camera only. Plausible guesses, not any one camera's spec
+    // sheet — check yours before trusting them.
+    public static final double kSimHorizontalFovDegrees = 80.0;
+    public static final double kSimVerticalFovDegrees = 56.0;
+    public static final double kSimMaxRangeMeters = 6.0;
+  }
+
+  public static final class PathConstants {
+    // BLine runs three P loops at once. Every gain here is "output per unit of
+    // error", and since error is meters (or radians) and output is per-second,
+    // the units all come out to 1/s.
+    public static final double kTranslationP = 5.0; // m/s per meter of path left
+    public static final double kRotationP = 3.0;    // rad/s per radian of heading error
+    public static final double kCrossTrackP = 2.0;  // m/s per meter off the line
+  }
+
+  /**
+   * ====== NEXT LESSON: ADD CODE HERE ======
+   * Add an ElevatorConstants class: the motor's CAN ID, gear ratio, drum radius and
+   * carriage mass; the travel limits; Motion Magic's cruise speed and acceleration; the
+   * feedforward gains computed from the motor's spec sheet plus a small kP trim; three
+   * preset heights; and how close counts as arrived.
+   */
 }
