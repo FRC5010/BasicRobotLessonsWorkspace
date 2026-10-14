@@ -7,6 +7,10 @@ package first.robot.opmode;
 import org.wpilib.opmode.PeriodicOpMode;
 import org.wpilib.opmode.Teleop;
 
+<<<<<<< Updated upstream
+=======
+import first.robot.Constants.DriveConstants;
+>>>>>>> Stashed changes
 import first.robot.Robot;
 
 @Teleop
@@ -17,6 +21,7 @@ public class RobotTeleop extends PeriodicOpMode {
   public RobotTeleop(Robot robot) {
     this.robot = robot;
 
+<<<<<<< Updated upstream
     /**
      * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
      * Replace the translate default and both bumper rotate bindings with one default
@@ -34,6 +39,15 @@ public class RobotTeleop extends PeriodicOpMode {
 
     robot.driverController.leftBumper().whileTrue(robot.drivetrain.rotate(0.3));
     robot.driverController.rightBumper().whileTrue(robot.drivetrain.rotate(-0.3));
+=======
+    // Classic swerve default: left stick translates (field-relative), right
+    // stick rotates.
+    robot.drivetrain.setDefaultCommand(
+        robot.drivetrain.driveFieldRelative(
+            () -> DriveConstants.kMaxSpeed.times(-robot.driverController.getLeftY()),  // forward = +X
+            () -> DriveConstants.kMaxSpeed.times(-robot.driverController.getLeftX()),  // left    = +Y
+            () -> DriveConstants.kMaxAngularSpeed.times(-robot.driverController.getRightX())));
+>>>>>>> Stashed changes
 
     // Tap the bottom face button to turn and face 90°; the right face button for 0°.
     robot.driverController.faceDown().onTrue(robot.drivetrain.turnToHeading(90));

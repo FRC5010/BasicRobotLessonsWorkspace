@@ -1,5 +1,6 @@
 package first.robot.subsystems;
 
+<<<<<<< Updated upstream
 import static org.wpilib.units.Units.Rotations;
 import static org.wpilib.units.Units.RotationsPerSecond;
 
@@ -10,12 +11,32 @@ import org.wpilib.math.system.Models;
 import org.wpilib.simulation.DCMotorSim;
 import org.wpilib.system.RobotController;
 
+=======
+import static org.wpilib.units.Units.MetersPerSecond;
+import static org.wpilib.units.Units.Rotations;
+import static org.wpilib.units.Units.RotationsPerSecond;
+
+>>>>>>> Stashed changes
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.TalonFXSimState;
+<<<<<<< Updated upstream
+=======
+import org.wpilib.hardware.bus.CANPort;
+
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.kinematics.SwerveModulePosition;
+import org.wpilib.math.kinematics.SwerveModuleVelocity;
+import org.wpilib.math.system.DCMotor;
+import org.wpilib.math.system.Models;
+import org.wpilib.math.util.MathUtil;
+import org.wpilib.simulation.DCMotorSim;
+import org.wpilib.system.RobotController;
+>>>>>>> Stashed changes
 
 import first.robot.Constants.DriveConstants;
 import first.robot.Constants.SteerConstants;
@@ -35,6 +56,16 @@ public class SwerveModule {
   private final TalonFXSimState m_driveSim;
   private final TalonFXSimState m_steerSim;
 
+<<<<<<< Updated upstream
+=======
+  /**
+   * ====== NEXT LESSON: ADD CODE HERE ======
+   * Add a sim state for the CANcoder — the steering loop is about to read it
+   * continuously. Add two reusable control requests, a position request for steering
+   * and a velocity request for driving, so each tick only has to update the target.
+   */
+
+>>>>>>> Stashed changes
   // Physics models depend only on constants, so they still initialize inline.
   private final DCMotorSim m_driveModel =
       new DCMotorSim(
@@ -56,6 +87,7 @@ public class SwerveModule {
     m_steerEncoder = new CANcoder(cancoderId, new CANBus(CANPort.CAN_S0));
     m_driveSim = m_driveMotor.getSimState();
     m_steerSim = m_steerMotor.getSimState();
+<<<<<<< Updated upstream
       
 
     // public SwerveModulePosition getPosition() {
@@ -63,6 +95,13 @@ public class SwerveModule {
     //     getDistanceMeters, Rotation2d.fromDegrees(getSteerAngleDegrees()));
     // }
 
+=======
+
+    /**
+     * ====== NEXT LESSON: ADD CODE HERE ======
+     * Grab the CANcoder's sim state alongside the other two.
+     */
+>>>>>>> Stashed changes
 
     // Same CANcoder priming as Lesson 5, now paid off for the real 25:1 ratio:
     // seed the motor's rotor-side counter, not the wheel-side reading.
@@ -70,16 +109,39 @@ public class SwerveModule {
     cancoderConfig.MagnetSensor.MagnetOffset = magnetOffsetRotations;
     m_steerEncoder.getConfigurator().apply(cancoderConfig);
 
+<<<<<<< Updated upstream
+=======
+    /**
+     * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
+     * Grow this configuration into the one that runs the steering loop. Keep the
+     * inversion, and add: read the CANcoder directly as a remote sensor, with the
+     * rotor-to-CANcoder gear ratio; continuous wrap, so it always takes the short way
+     * around; and a P gain.
+     */
+
+>>>>>>> Stashed changes
     // Which way the steering motor counts: a fact about your gearbox, set in SteerConstants.
     TalonFXConfiguration steerConfig = new TalonFXConfiguration();
     steerConfig.MotorOutput.Inverted = SteerConstants.kSteerInverted;
     m_steerMotor.getConfigurator().apply(steerConfig);
+<<<<<<< Updated upstream
+=======
+
+    /**
+     * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
+     * A one-time seed can't correct drift afterward, so priming goes. In its place,
+     * give the drive motor a configuration of its own: the gear ratio as sensor-to-
+     * mechanism, so it reports wheel rotations, plus the kV model and kP trim.
+     */
+
+>>>>>>> Stashed changes
     m_steerMotor.setPosition(
         m_steerEncoder.getAbsolutePosition().getValue().in(Rotations) * SteerConstants.kSteerGearRatio);
   }
 
   /**
    * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
+<<<<<<< Updated upstream
    * Take a SwerveModuleVelocity — a speed in meters per second plus an angle — instead
    * of two bare numbers. Wrap the steering error with MathUtil.inputModulus instead of
    * the two while loops, and turn the speed into a fraction of max speed before
@@ -103,6 +165,27 @@ public class SwerveModule {
     // cos(0°) = 1 → full speed; cos(90°) = 0 → don't drive while sideways.
     double alignment = Math.cos(Math.toRadians(error));
     m_driveMotor.setThrottle(speedFraction * alignment);
+=======
+   * Hand the firmware targets instead of computing outputs: send the steering motor a
+   * position request with the wanted angle, and the drive motor a velocity request in
+   * wheel rotations per second — the requested speed, cosine-scaled, divided by the
+   * wheel's circumference. Nothing calls the private clamp helper after this, so delete
+   * it.
+   */
+
+  /** One tick of control: chase the given state. */
+  public void setDesiredState(SwerveModuleVelocity state) {
+    // Steering: the same P control, error wrapped to ±180° in one call now.
+    double error = MathUtil.inputModulus(
+        state.angle.getDegrees() - getSteerAngleDegrees(), -180, 180);
+    double steerOutput = clamp(SteerConstants.kP * error, -1.0, 1.0);
+    m_steerMotor.setThrottle(steerOutput);
+
+    // Drive: meters per second → fraction of max, with the cosine scale.
+    double alignment = Math.cos(Math.toRadians(error));
+    double fraction = state.velocity / DriveConstants.kMaxSpeed.in(MetersPerSecond);
+    m_driveMotor.setThrottle(fraction * alignment);
+>>>>>>> Stashed changes
   }
 
   /** Zero the drive encoder — start measuring distance from *here*. */
@@ -121,6 +204,15 @@ public class SwerveModule {
     }
   }
 
+<<<<<<< Updated upstream
+=======
+  /**
+   * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
+   * Drop the gear-ratio math: the firmware now reports the CANcoder's reading, already
+   * in steering rotations.
+   */
+
+>>>>>>> Stashed changes
   /** Current steering angle in degrees (through the real 25:1 reduction). */
   public double getSteerAngleDegrees() {
     double steerRotations =
@@ -128,6 +220,14 @@ public class SwerveModule {
     return steerRotations * 360.0;
   }
 
+<<<<<<< Updated upstream
+=======
+  /**
+   * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
+   * Drop the gear-ratio division: the drive motor now reports wheel rotations.
+   */
+
+>>>>>>> Stashed changes
   /** How far this module's wheel has driven, in meters, since the last reset. */
   public double getDistanceMeters() {
     double rotorRotations = m_driveMotor.getPosition().getValue().in(Rotations);
@@ -135,9 +235,16 @@ public class SwerveModule {
     return wheelRotations * DriveConstants.kWheelCircumferenceMeters;
   }
 
+<<<<<<< Updated upstream
   // public SwerveModulePosition getPosition() {
   
   // }
+=======
+  /**
+   * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
+   * Drop the gear-ratio division here too.
+   */
+>>>>>>> Stashed changes
 
   /** Current wheel speed in meters per second. */
   public double getDriveVelocityMetersPerSec() {
@@ -146,6 +253,15 @@ public class SwerveModule {
     return wheelRps * DriveConstants.kWheelCircumferenceMeters;
   }
 
+<<<<<<< Updated upstream
+=======
+  /** How far this wheel has rolled and where it's pointing — for odometry. */
+  public SwerveModulePosition getPosition() {
+    return new SwerveModulePosition(
+        getDistanceMeters(), Rotation2d.fromDegrees(getSteerAngleDegrees()));
+  }
+
+>>>>>>> Stashed changes
   /** Advances the physics model by one tick. Only ever called in simulation. */
   public void simulatePeriodic() {
     // Drive motor: model reports wheel motion, convert back to rotor-side.
@@ -165,5 +281,15 @@ public class SwerveModule {
         m_steerModel.getAngularPosition() / (2 * Math.PI) * SteerConstants.kSteerGearRatio);
     m_steerSim.setRotorVelocity(
         m_steerModel.getAngularVelocity() / (2 * Math.PI) * SteerConstants.kSteerGearRatio);
+<<<<<<< Updated upstream
+=======
+
+    /**
+     * ====== NEXT LESSON: ADD CODE HERE ======
+     * Feed the CANcoder's sim state too: the closed loop reads it continuously now, so
+     * push the steering model's position and velocity in directly — mechanism-side,
+     * with no gear multiply.
+     */
+>>>>>>> Stashed changes
   }
 }
