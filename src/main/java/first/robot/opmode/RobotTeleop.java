@@ -7,37 +7,24 @@ package first.robot.opmode;
 import org.wpilib.opmode.PeriodicOpMode;
 import org.wpilib.opmode.Teleop;
 
+import first.robot.Constants.DriveConstants;
 import first.robot.Robot;
 
-/**
- * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
- * Rename this opmode to RobotTeleop. It isn't template example code anymore — it's the
- * permanent home for how this robot drives. Only the file and class name change; every
- * binding stays as it is.
- */
-
 @Teleop
-public class MyTeleop extends PeriodicOpMode {
+public class RobotTeleop extends PeriodicOpMode {
   private final Robot robot;
 
-  /**
-   * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
-   * Rename the constructor to RobotTeleop too — a constructor always has its class's
-   * name.
-   */
-
   /** The Robot instance is passed into the opmode via the constructor. */
-  public MyTeleop(Robot robot) {
+  public RobotTeleop(Robot robot) {
     this.robot = robot;
 
-    // Left stick translates by default; bumpers spin in place.
+    // Classic swerve default: left stick translates (field-relative), right
+    // stick rotates.
     robot.drivetrain.setDefaultCommand(
-        robot.drivetrain.translate(
-            () -> -robot.driverController.getLeftY(),   // forward = +X
-            () -> -robot.driverController.getLeftX())); // left    = +Y
-
-    robot.driverController.leftBumper().whileTrue(robot.drivetrain.rotate(0.3));
-    robot.driverController.rightBumper().whileTrue(robot.drivetrain.rotate(-0.3));
+        robot.drivetrain.driveFieldRelative(
+            () -> DriveConstants.kMaxSpeed.times(-robot.driverController.getLeftY()),  // forward = +X
+            () -> DriveConstants.kMaxSpeed.times(-robot.driverController.getLeftX()),  // left    = +Y
+            () -> DriveConstants.kMaxAngularSpeed.times(-robot.driverController.getRightX())));
 
     // Tap the bottom face button to turn and face 90°; the right face button for 0°.
     robot.driverController.faceDown().onTrue(robot.drivetrain.turnToHeading(90));
