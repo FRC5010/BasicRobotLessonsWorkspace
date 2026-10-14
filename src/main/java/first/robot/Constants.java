@@ -14,6 +14,13 @@ import org.wpilib.units.measure.AngularVelocity;
 import org.wpilib.units.measure.LinearVelocity;
 
 public final class Constants {
+  /**
+   * ====== NEXT LESSON: ADD CODE HERE ======
+   * Add a Mode enum — REAL, SIM, REPLAY — and decide the current mode once: REAL on a
+   * robot, and otherwise a sim mode you can switch to REPLAY to re-run a log file
+   * instead of simulating fresh.
+   */
+
   // Added by Try It #4: one CAN ID + one magnet offset per corner, all named,
   // instead of literals baked into the array in Drivetrain.
   public static final class DriveConstants {
@@ -58,11 +65,14 @@ public final class Constants {
 
     // How fast the chassis may spin at full stick — one full rotation per second.
     public static final AngularVelocity kMaxAngularSpeed = RotationsPerSecond.of(1.0);
+
+    public static final double kDriveKV = 0.8;          // volts per wheel rotation/sec — the model
+    public static final double kDriveKP = 0.1;          // volts per rps of error — the trim
   }
 
   public static final class SteerConstants {
-    public static final double kP = 0.0005;          // from Lesson 5 — retune once the real gearing lands
-    public static final double kSteerGearRatio = 25.0; // rotor : steering
+    public static final double kSteerGearRatio = 25.0;  // rotor : CANcoder
+    public static final double kSteerKP = 40.0;         // volts per rotation of error — tune
     public static final InvertedValue kSteerInverted = InvertedValue.CounterClockwise_Positive; // flip if your steering counts backward
   }
 

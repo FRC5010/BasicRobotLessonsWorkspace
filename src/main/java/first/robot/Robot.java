@@ -58,6 +58,13 @@ public class Robot extends OpModeRobot {
   /** Runs every tick, but only while the code is running in simulation. */
   @Override
   public void simulationPeriodic() {
+    /**
+     * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
+     * All the sim code moves inside the simulated IO classes, which step their physics
+     * whenever they're read, so there's nothing left to call from here: empty this
+     * method out.
+     */
+
     drivetrain.simulatePeriodic();
   }
 
