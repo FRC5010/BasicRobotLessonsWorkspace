@@ -232,6 +232,7 @@ public class Drivetrain implements Mechanism {
     Pose2d pose = m_odometry.update(Rotation2d.fromDegrees(getHeadingDegrees()), modulePositions());
     Telemetry.log("Drivetrain/Pose", pose, Pose2d.struct);
     m_field.setRobotPose(pose);
+    Telemetry.log("Field",m_field);
   }
 
   /** Advances every module's physics model, then the fake gyro. Only ever called in simulation. */
@@ -245,4 +246,11 @@ public class Drivetrain implements Mechanism {
     m_simHeadingDegrees += m_lastCommandedOmega * 360.0 * 0.020; // one 20 ms tick
     m_gyro.getSimState().setRawYaw(m_simHeadingDegrees);
   }
+  private final Field2d m_field = new Field2d();
+
+  public void resetPose(Pose2d pose) {
+    m_odometry.resetPosition(
+        Rotation2d.fromDegrees(getHeadingDegrees()), modulePositions(), pose);
+  }
+
 }
