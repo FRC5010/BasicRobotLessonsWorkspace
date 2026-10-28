@@ -3,10 +3,11 @@
 // the WPILib BSD license file in the root directory of this project.
 
 package first.robot;
-import java.util.Scanner;
 import org.wpilib.math.geometry.Translation2d;
 import org.wpilib.units.measure.AngularVelocity;
 import org.wpilib.units.measure.LinearVelocity;
+import static org.wpilib.units.Units.MetersPerSecond;
+import static org.wpilib.units.Units.RotationsPerSecond;
 
 import com.ctre.phoenix6.signals.InvertedValue;
 

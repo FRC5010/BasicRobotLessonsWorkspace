@@ -90,7 +90,8 @@ public class Drivetrain implements Mechanism {
       double angleDeg = Math.toDegrees(Math.atan2(vy, vx));     // vector angle
       m_lastCommandedOmega = 0.0;                                // pure translation: no rotation
       for (SwerveModule module : m_modules) {
-        module.setDesiredState(angleDeg, speed);
+        module.setDesiredState(new SwerveModuleVelocity(
+          speed, Rotation2d.fromDegrees(angleDeg)));
       }
     }).named("Translate");
   }
@@ -128,18 +129,19 @@ public class Drivetrain implements Mechanism {
           m_modules[0].resetDrivePosition(); // zero one wheel's odometer
           while (Math.abs(m_modules[0].getDistanceMeters()) < Math.abs(meters)) {
             for (SwerveModule module : m_modules) {
-              module.setDesiredState(0.0, 0.4); // point forward, 40% throttle
+              module.setDesiredState(new SwerveModuleVelocity(
+                  DriveConstants.kMaxSpeed * 0.4, Rotation2d.fromDegrees(0.0)));
             }
             m_lastCommandedOmega = 0.0;
             coroutine.yield();
           }
           for (SwerveModule module : m_modules) {
-            module.setDesiredState(0.0, 0.0); // reached it — stop
+            module.setDesiredState(new SwerveModuleVelocity(0.0, Rotation2d.fromDegrees(0.0)));
           }
         })
         .whenCanceled(() -> {
           for (SwerveModule module : m_modules) {
-            module.setDesiredState(0.0, 0.0); // interrupted — stop
+            module.setDesiredState(new SwerveModuleVelocity(0.0, Rotation2d.fromDegrees(0.0)));
           }
         })
         .named("Drive Distance");

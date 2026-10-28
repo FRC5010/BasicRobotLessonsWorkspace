@@ -21,10 +21,10 @@ public class RobotTeleop extends PeriodicOpMode {
     // Classic swerve default: left stick translates (field-relative), right
     // stick rotates.
     robot.drivetrain.setDefaultCommand(
-        robot.drivetrain.driveFieldRelative(
+      robot.drivetrain.run(coroutine -> robot.drivetrain.driveFieldRelative(
             () -> DriveConstants.kMaxSpeed.times(-robot.driverController.getLeftY()),  // forward = +X
             () -> DriveConstants.kMaxSpeed.times(-robot.driverController.getLeftX()),  // left    = +Y
-            () -> DriveConstants.kMaxAngularSpeed.times(-robot.driverController.getRightX())));
+        () -> DriveConstants.kMaxAngularSpeed.times(-robot.driverController.getRightX()))));
 
     // Tap the bottom face button to turn and face 90°; the right face button for 0°.
     robot.driverController.faceDown().onTrue(robot.drivetrain.turnToHeading(90));

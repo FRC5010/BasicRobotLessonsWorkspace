@@ -1,9 +1,9 @@
-@ -1,60 +1,61 @@
+// @ -1,60 +1,61 @@
 // Copyright (c) FIRST and other WPILib contributors.
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package first.robot;
+package first.robot.subsystems;
 
 import com.ctre.phoenix6.signals.InvertedValue;
 
@@ -28,7 +28,7 @@ public final class Constants {
     public static final int kBackRightDrivePort = 8;
     public static final int kBackRightSteerPort = 7;
     public static final int kBackRightCancoderPort = 0;
-    public static final int kGyroPort = 0;               // CAN ID — change to yours
+    // public static final int kGyroPort = 0             // CAN ID — change to yours
     public static final int kGyroPort = 50;               // CAN ID — change to yours
 
     // Magnet offsets (rotations) — measure with Phoenix Tuner X, change to yours.
@@ -55,7 +55,7 @@ public final class Constants {
   public static final class SteerConstants {
     public static final double kP = 0.008;          // from Lesson 5 — retune once the real gearing lands
     public static final double kSteerGearRatio = 1; // rotor : steering
-    public static final double kSteerGearRatio = RobotBase.isSimulation() ? 25 : 1; // rotor : steering
+    // public static final double kSteerGearRatio = RobotBase.isSimulation() ? 25 : 1; // rotor : steering
     public static final InvertedValue kSteerInverted = InvertedValue.CounterClockwise_Positive; // flip if your steering counts backward
   }
 
