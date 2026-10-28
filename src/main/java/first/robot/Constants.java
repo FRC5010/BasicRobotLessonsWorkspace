@@ -3,13 +3,15 @@
 // the WPILib BSD license file in the root directory of this project.
 
 package first.robot;
-import org.wpilib.math.geometry.Translation2d;
-import org.wpilib.units.measure.AngularVelocity;
-import org.wpilib.units.measure.LinearVelocity;
+
 import static org.wpilib.units.Units.MetersPerSecond;
 import static org.wpilib.units.Units.RotationsPerSecond;
 
 import com.ctre.phoenix6.signals.InvertedValue;
+
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.units.measure.AngularVelocity;
+import org.wpilib.units.measure.LinearVelocity;
 
 public final class Constants {
   // Added by Try It #4: one CAN ID + one magnet offset per corner, all named,
@@ -27,12 +29,7 @@ public final class Constants {
     public static final int kBackRightDrivePort = 7;
     public static final int kBackRightSteerPort = 8;
     public static final int kBackRightCancoderPort = 12;
-    public static final int kGyroPort = 0;           // CAN ID — change to yours
-
-    public static final LinearVelocity kMaxSpeed =
-      MetersPerSecond.of(100.0 / 6.75 * (Math.PI * 0.1016));
-    
-    public static final AngularVelocity kMaxAngularSpeed = RotationsPerSecond.of(1.0);
+    public static final int kGyroPort = 0;               // CAN ID — change to yours
 
     // Magnet offsets (rotations) — measure with Phoenix Tuner X, change to yours.
     public static final double kFrontLeftMagnetOffset = 0.0;
@@ -54,16 +51,30 @@ public final class Constants {
     public static final Translation2d kBackLeft   = new Translation2d(-kHalfLength,  kHalfWidth);
     public static final Translation2d kBackRight  = new Translation2d(-kHalfLength, -kHalfWidth);
 
+    // Kraken X60 free speed ≈ 6000 RPM = 100 rotations/sec. Divide by the gear
+    // ratio, multiply by circumference → meters/sec. About 4.7 m/s for our numbers.
+    public static final LinearVelocity kMaxSpeed =
+        MetersPerSecond.of(100.0 / 6.75 * (Math.PI * 0.1016));
+
+    // How fast the chassis may spin at full stick — one full rotation per second.
+    public static final AngularVelocity kMaxAngularSpeed = RotationsPerSecond.of(1.0);
+
     /**
      * ====== NEXT LESSON: ADD CODE HERE ======
-     * Add the chassis's top speeds as Units measures: a max linear speed worked out
-     * from the Kraken's free speed — about 100 rotations per second — divided by the
-     * gear ratio and multiplied by the wheel's circumference, and a max angular speed
-     * of one rotation per second.
+     * Add the drive motor's model and trim for firmware velocity control: kV, in volts
+     * per wheel rotation per second — the voltage that holds a speed with no error at
+     * all — and a small kP to correct whatever the model misses.
      */
   }
 
   public static final class SteerConstants {
+    /**
+     * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
+     * The software steering gain retires; the motor's firmware runs the steering loop
+     * from now on. Keep the gear ratio — it now reads as rotor to CANcoder — and add a
+     * firmware P gain in volts per rotation of error.
+     */
+
     public static final double kP = 0.0005;          // from Lesson 5 — retune once the real gearing lands
     public static final double kSteerGearRatio = 25.0; // rotor : steering
     public static final InvertedValue kSteerInverted = InvertedValue.CounterClockwise_Positive; // flip if your steering counts backward

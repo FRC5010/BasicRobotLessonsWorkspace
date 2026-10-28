@@ -1,20 +1,29 @@
 package first.robot.subsystems;
 
 import static org.wpilib.units.Units.Degrees;
+import static org.wpilib.units.Units.MetersPerSecond;
 
-import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
+
+import com.ctre.phoenix6.CANBus;
+import com.ctre.phoenix6.hardware.Pigeon2;
 
 import org.wpilib.command3.Command;
 import org.wpilib.command3.Mechanism;
 import org.wpilib.command3.Scheduler;
 import org.wpilib.hardware.bus.CANPort;
+import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
 import org.wpilib.math.kinematics.SwerveDriveKinematics;
+import org.wpilib.math.kinematics.SwerveDriveOdometry;
+import org.wpilib.math.kinematics.SwerveModulePosition;
 import org.wpilib.math.kinematics.SwerveModuleVelocity;
+import org.wpilib.math.util.MathUtil;
+import org.wpilib.smartdashboard.Field2d;
 import org.wpilib.telemetry.Telemetry;
-
-import com.ctre.phoenix6.CANBus;
-import com.ctre.phoenix6.hardware.Pigeon2;
+import org.wpilib.units.measure.AngularVelocity;
+import org.wpilib.units.measure.LinearVelocity;
 
 import first.robot.Constants.DriveConstants;
 import first.robot.Constants.HeadingConstants;
@@ -36,31 +45,22 @@ public class Drivetrain implements Mechanism {
           DriveConstants.kBackRight)
   };
 
-  // private SwerveModulePosition[] modulePosition() {
-  //   SwerveModulePosition[] positions = new SwerveModulePosition[m_modules.length];
-  //   for (int i = 0; i < m_modules.length; i++) {
-  //     positions[i] = m_modules[i].getPosition();
-  //   }
-  //   return positions;
-  // }
-
-
-  private final SwerveDriveKinematics m_kinematics = new SwerveDriveKinematics (
-    m_modules[0].location, m_modules[1].location,
-    m_modules[2].location, m_modules[3].location //FL FR BL BR 
-);
-  /**
-   * ====== NEXT LESSON: ADD CODE HERE ======
-   * Build a SwerveDriveKinematics from the four modules' locations, in the same corner
-   * order as the array. It does the math that turns one motion of the whole chassis
-   * into four wheel states.
-   */
+  private final SwerveDriveKinematics m_kinematics = new SwerveDriveKinematics(
+      m_modules[0].location,
+      m_modules[1].location,
+      m_modules[2].location,
+      m_modules[3].location);
 
   private final Pigeon2 m_gyro = new Pigeon2(DriveConstants.kGyroPort, new CANBus(CANPort.CAN_S0));
-  // private final SwerveDriveOdometry m_odometry = new SwerveDriveOdometry(
-  //   m_kinematics,
-  //   Rotation2d.fromDegrees(getHeadingDegrees()),
-  //   modulePosition());
+
+  // Odometry reads the kinematics, the gyro, and the modules' starting
+  // positions — everything above this line has to exist first.
+  private final SwerveDriveOdometry m_odometry = new SwerveDriveOdometry(
+      m_kinematics,
+      Rotation2d.fromDegrees(getHeadingDegrees()),
+      modulePositions());
+
+  private final Field2d m_field = new Field2d();
 
   // Remembered for the sim: what rotation rate did we just command?
   private double m_lastCommandedOmega = 0.0;
@@ -70,35 +70,40 @@ public class Drivetrain implements Mechanism {
     Scheduler.getDefault().addPeriodic(this::logTelemetry);
   }
 
-  /**
-   * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
-   * Kinematics replaces both translate and rotate. Put the four steps every way of
-   * driving shares into one private helper: convert a chassis velocity into module
-   * states, desaturate them so no wheel is asked past max speed, optimize each against
-   * its current angle, and command it — recording the rotation rate for the sim and
-   * logging the desired states. Then add drive, which calls the helper every tick from
-   * three Units suppliers, and driveFieldRelative, which first rotates field-relative
-   * speeds into the robot's frame using the gyro heading.
-   */
+  /** One tick of chassis motion: convert, desaturate, optimize, command. */
+  private void applyChassisSpeeds(ChassisVelocities speeds) {
+    SwerveModuleVelocity[] states = m_kinematics.toSwerveModuleVelocities(speeds);
 
-  /** Drive the whole chassis at fractional velocity (vx, vy). */
-  public Command translate(DoubleSupplier vxSupplier, DoubleSupplier vySupplier) {
-    return runRepeatedly(() -> {
-      double vx = vxSupplier.getAsDouble();
-      double vy = vySupplier.getAsDouble();
-      double speed = Math.hypot(vx, vy);                        // vector length
-      double angleDeg = Math.toDegrees(Math.atan2(vy, vx));     // vector angle
-      m_lastCommandedOmega = 0.0;                                // pure translation: no rotation
-      for (SwerveModule module : m_modules) {
-        module.setDesiredState(new SwerveModuleVelocity(
-          speed, Rotation2d.fromDegrees(angleDeg)));
-      }
-    }).named("Translate");
+    // If the request would drive some wheel past the max, scale ALL wheels
+    // down proportionally so the *shape* of the motion is preserved.
+    // desaturateWheelVelocities takes a LinearVelocity directly — pass kMaxSpeed as-is.
+    states = SwerveDriveKinematics.desaturateWheelVelocities(states, DriveConstants.kMaxSpeed);
+
+    m_lastCommandedOmega = speeds.omega / (2 * Math.PI); // rev/s for sim
+
+    for (int i = 0; i < m_modules.length; i++) {
+      states[i] = states[i].optimize(Rotation2d.fromDegrees(m_modules[i].getSteerAngleDegrees()));
+      m_modules[i].setDesiredState(states[i]);
+    }
+
+    Telemetry.log("Drivetrain/DesiredModuleStates", states, SwerveModuleVelocity.struct);
   }
 
-  /** Spin in place at fractional angular rate 'omega' (positive = CCW). */
-  public Command rotate(double omega) {
-    return runRepeatedly(() -> commandRotation(omega)).named("Rotate");
+  /** Drive with full swerve freedom: translate and rotate at once. */
+  public Command drive(
+      Supplier<LinearVelocity> vx, Supplier<LinearVelocity> vy, Supplier<AngularVelocity> omega) {
+    return runRepeatedly(
+            () -> applyChassisSpeeds(new ChassisVelocities(vx.get(), vy.get(), omega.get())))
+        .named("Drive");
+  }
+
+  /** Same as drive(), but 'forward' always means away from the driver station. */
+  public Command driveFieldRelative(
+      Supplier<LinearVelocity> vx, Supplier<LinearVelocity> vy, Supplier<AngularVelocity> omega) {
+    return runRepeatedly(() -> {
+      ChassisVelocities fieldSpeeds = new ChassisVelocities(vx.get(), vy.get(), omega.get());
+      applyChassisSpeeds(fieldSpeeds.toRobotRelative(Rotation2d.fromDegrees(getHeadingDegrees())));
+    }).named("Drive Field Relative");
   }
 
   /** Turn to face 'targetDegrees'. Finishes when within 2°. */
@@ -117,74 +122,60 @@ public class Drivetrain implements Mechanism {
         .named("Turn To Heading");
   }
 
-  /**
-   * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
-   * setDesiredState now takes a module state instead of two numbers: drive with a state
-   * at 40% of max speed pointed at 0°, and stop with an empty, zero-speed state.
-   */
-
   /** Drive straight forward 'meters' at 40% power. Finishes on its own. */
   public Command driveDistance(double meters) {
     return run(coroutine -> {
           m_modules[0].resetDrivePosition(); // zero one wheel's odometer
           while (Math.abs(m_modules[0].getDistanceMeters()) < Math.abs(meters)) {
             for (SwerveModule module : m_modules) {
-              module.setDesiredState(new SwerveModuleVelocity(
-                  DriveConstants.kMaxSpeed * 0.4, Rotation2d.fromDegrees(0.0)));
+              module.setDesiredState(
+                  new SwerveModuleVelocity(DriveConstants.kMaxSpeed.times(0.4), Rotation2d.fromDegrees(0)));
             }
             m_lastCommandedOmega = 0.0;
             coroutine.yield();
           }
           for (SwerveModule module : m_modules) {
-            module.setDesiredState(new SwerveModuleVelocity(0.0, Rotation2d.fromDegrees(0.0)));
+            module.setDesiredState(new SwerveModuleVelocity()); // reached it — stop
           }
         })
         .whenCanceled(() -> {
           for (SwerveModule module : m_modules) {
-            module.setDesiredState(new SwerveModuleVelocity(0.0, Rotation2d.fromDegrees(0.0)));
+            module.setDesiredState(new SwerveModuleVelocity()); // interrupted — stop
           }
         })
         .named("Drive Distance");
   }
 
-  /**
-   * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
-   * Rebuild this on the new helper: turn the rotation rate, in revolutions per second,
-   * into a chassis velocity with no translation, and let the helper do the rest.
-   */
-
-  /** One tick of pure rotation: steer every wheel tangent to the circle. */
-  private void commandRotation(double omega) {
-    m_lastCommandedOmega = omega;
-    for (SwerveModule module : m_modules) {
-      double x = module.location.getX();
-      double y = module.location.getY();
-      double angleDeg = Math.toDegrees(Math.atan2(x, -y));
-      module.setDesiredState(angleDeg, omega);
-    }
+  /** Drive straight toward 'target' using P control, field-relative. Finishes within 5 cm. */
+  public Command driveToPose(Pose2d target) {
+    double maxMps = DriveConstants.kMaxSpeed.in(MetersPerSecond); // convert once, reuse
+    return runRepeatedly(() -> {
+          Pose2d current = getPose();
+          double dx = target.getX() - current.getX();
+          double dy = target.getY() - current.getY();
+          double vx = clamp(1.5 * dx, -maxMps, maxMps);
+          double vy = clamp(1.5 * dy, -maxMps, maxMps);
+          double omega = clamp(
+              3.0 * target.getRotation().minus(current.getRotation()).getRadians(),
+              -Math.PI, Math.PI);
+          ChassisVelocities fieldSpeeds = new ChassisVelocities(vx, vy, omega);
+          applyChassisSpeeds(fieldSpeeds.toRobotRelative(current.getRotation()));
+        })
+        .whenCanceled(() -> applyChassisSpeeds(new ChassisVelocities())) // reached it or interrupted — stop
+        .until(() -> getPose().minus(target).getTranslation().getNorm() < 0.05)
+        .named("Drive To Pose");
   }
 
-  /**
-   * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
-   * Replace the two wrap loops with MathUtil.inputModulus, which wraps the error into
-   * ±180° in one call.
-   */
+  /** One tick of pure rotation: steer every wheel tangent to the circle. */
+  private void commandRotation(double omegaRevPerSec) {
+    applyChassisSpeeds(new ChassisVelocities(0, 0, omegaRevPerSec * 2 * Math.PI));
+  }
 
   /** Signed error to 'target' in degrees, wrapped to (-180, 180]. */
   private double headingError(double targetDegrees) {
-    double error = targetDegrees - getHeadingDegrees();
-    while (error > 180) {
-      error -= 360;
-    }
-    while (error < -180) {
-      error += 360;
-    }
-    return error;
+    return MathUtil.inputModulus(targetDegrees - getHeadingDegrees(), -180, 180);
   }
 
-  // public Pose2d getPose() {
-  //   return m_odometry.getPose();
-  // }
   /** Keeps 'value' between 'min' and 'max'. */
   private double clamp(double value, double min, double max) {
     if (value > max) {
@@ -199,6 +190,26 @@ public class Drivetrain implements Mechanism {
   /** Robot heading in degrees (CCW positive). */
   public double getHeadingDegrees() {
     return m_gyro.getYaw().getValue().in(Degrees);
+  }
+
+  /** Where odometry currently believes the robot is. */
+  public Pose2d getPose() {
+    return m_odometry.getPose();
+  }
+
+  /** Tell odometry the robot is actually at 'pose' right now. */
+  public void resetPose(Pose2d pose) {
+    m_odometry.resetPosition(
+        Rotation2d.fromDegrees(getHeadingDegrees()), modulePositions(), pose);
+  }
+
+  /** Snapshot the four modules' positions into one array — used by odometry. */
+  private SwerveModulePosition[] modulePositions() {
+    SwerveModulePosition[] positions = new SwerveModulePosition[m_modules.length];
+    for (int i = 0; i < m_modules.length; i++) {
+      positions[i] = m_modules[i].getPosition();
+    }
+    return positions;
   }
 
   private void logTelemetry() {
@@ -216,6 +227,11 @@ public class Drivetrain implements Mechanism {
 
     Telemetry.log("Drivetrain/HeadingDegrees", getHeadingDegrees());
     Telemetry.log("Drivetrain/Heading", Rotation2d.fromDegrees(getHeadingDegrees()), Rotation2d.struct);
+
+    Pose2d pose = m_odometry.update(Rotation2d.fromDegrees(getHeadingDegrees()), modulePositions());
+    Telemetry.log("Drivetrain/Pose", pose, Pose2d.struct);
+    m_field.setRobotPose(pose);
+    Telemetry.log("Field", m_field);
   }
 
   /** Advances every module's physics model, then the fake gyro. Only ever called in simulation. */
