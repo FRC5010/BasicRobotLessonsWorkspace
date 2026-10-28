@@ -4,6 +4,8 @@
 
 package first.robot.opmode;
 
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.opmode.PeriodicOpMode;
 import org.wpilib.opmode.Teleop;
 
@@ -37,6 +39,8 @@ public class RobotTeleop extends PeriodicOpMode {
     // Tap the bottom face button to turn and face 90°; the right face button for 0°.
     robot.driverController.faceDown().onTrue(robot.drivetrain.turnToHeading(90));
     robot.driverController.faceRight().onTrue(robot.drivetrain.turnToHeading(0));
+
+    robot.drivetrain.resetPose(new Pose2d(1, 1, new Rotation2d()));
   }
 
   @Override

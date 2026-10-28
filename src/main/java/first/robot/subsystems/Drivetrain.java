@@ -2,6 +2,7 @@ package first.robot.subsystems;
 
 import static org.wpilib.units.Units.Degrees;
 
+import java.lang.reflect.Field;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -12,11 +13,15 @@ import org.wpilib.command3.Command;
 import org.wpilib.command3.Mechanism;
 import org.wpilib.command3.Scheduler;
 import org.wpilib.hardware.bus.CANPort;
+import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.kinematics.ChassisVelocities;
 import org.wpilib.math.kinematics.SwerveDriveKinematics;
+import org.wpilib.math.kinematics.SwerveDriveOdometry;
+import org.wpilib.math.kinematics.SwerveModulePosition;
 import org.wpilib.math.kinematics.SwerveModuleVelocity;
 import org.wpilib.math.util.MathUtil;
+import org.wpilib.smartdashboard.Field2d;
 import org.wpilib.telemetry.Telemetry;
 import org.wpilib.units.measure.AngularVelocity;
 import org.wpilib.units.measure.LinearVelocity;
@@ -61,8 +66,24 @@ public class Drivetrain implements Mechanism {
   private double m_simHeadingDegrees = 0.0;
 
   public Drivetrain() {
+    Telemetry.log("Field", m_field);
     Scheduler.getDefault().addPeriodic(this::logTelemetry);
   }
+
+  private SwerveModulePosition[] modulePositions() {
+    SwerveModulePosition[] positions = new SwerveModulePosition[m_modules.length];
+    for (int i = 0; i < m_modules.length; i++) {
+      positions[i] = m_modules[i].getPosition();
+    }
+    return positions;
+  }
+
+  public Pose2d getPose() {
+    return m_odometry.getPose();
+  }
+
+  private final SwerveDriveOdometry m_odometry = new SwerveDriveOdometry(m_kinematics, Rotation2d.fromDegrees(getHeadingDegrees()), modulePositions());
+private final Field2d m_field = new Field2d();
 
   /**
    * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
@@ -77,7 +98,7 @@ public class Drivetrain implements Mechanism {
 
   /** Drive the whole chassis at fractional velocity (vx, vy). */
 
-  /** Spin in place at fractional angular rate 'omega' (positive = CCW). */
+  /** Spin in place at angular rate 'omega' (positive = CCW). */
 
   /** Turn to face 'targetDegrees'. Finishes when within 2°. */
   public Command turnToHeading(double targetDegrees) {
@@ -207,8 +228,11 @@ public class Drivetrain implements Mechanism {
 
     Telemetry.log("Drivetrain/HeadingDegrees", getHeadingDegrees());
     Telemetry.log("Drivetrain/Heading", Rotation2d.fromDegrees(getHeadingDegrees()), Rotation2d.struct);
+    Pose2d pose = m_odometry.update(Rotation2d.fromDegrees(getHeadingDegrees()), modulePositions());
+    Telemetry.log("Drivetrain/Pose", pose, Pose2d.struct);
+    m_field.setRobotPose(pose);
+    Telemetry.log("Field", m_field);
   }
-
   /** Advances every module's physics model, then the fake gyro. Only ever called in simulation. */
   public void simulatePeriodic() {
     for (SwerveModule module : m_modules) {
@@ -219,5 +243,8 @@ public class Drivetrain implements Mechanism {
     // as a fraction of "360°/sec" — max power spins us 360°/s.
     m_simHeadingDegrees += m_lastCommandedOmega * 360.0 * 0.020; // one 20 ms tick
     m_gyro.getSimState().setRawYaw(m_simHeadingDegrees);
+  }
+  public void resetPose(Pose2d pose) {
+    m_odometry.resetPosition(Rotation2d.fromDegrees(getHeadingDegrees()), modulePositions(), pose);
   }
 }

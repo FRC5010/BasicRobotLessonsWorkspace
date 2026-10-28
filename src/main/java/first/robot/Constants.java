@@ -62,10 +62,12 @@ public final class Constants {
      * gear ratio and multiplied by the wheel's circumference, and a max angular speed
      * of one rotation per second.
      */
+    public static final double kDriveKV = 0.8;
+    public static final double kDriveKP = 0.1;
   }
 
   public static final class SteerConstants {
-    public static final double kP = 0.0005;          // from Lesson 5 — retune once the real gearing lands
+    public static final double kSteerKP = 40.0;
     public static final double kSteerGearRatio = 25.0; // rotor : steering
     public static final InvertedValue kSteerInverted = InvertedValue.CounterClockwise_Positive; // flip if your steering counts backward
   }
