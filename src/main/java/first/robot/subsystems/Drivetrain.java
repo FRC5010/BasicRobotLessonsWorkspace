@@ -207,45 +207,29 @@ public class Drivetrain implements Mechanism {
    * at 40% of max speed pointed at 0°, and stop with an empty, zero-speed state.
    */
 
-=======
->>>>>>> Stashed changes
   /** Drive straight forward 'meters' at 40% power. Finishes on its own. */
   public Command driveDistance(double meters) {
     return run(coroutine -> {
           m_modules[0].resetDrivePosition(); // zero one wheel's odometer
           while (Math.abs(m_modules[0].getDistanceMeters()) < Math.abs(meters)) {
             for (SwerveModule module : m_modules) {
-<<<<<<< Updated upstream
               module.setDesiredState(0.0, 0.4); // point forward, 40% throttle
-=======
-              module.setDesiredState(
-                  new SwerveModuleVelocity(DriveConstants.kMaxSpeed.times(0.4), Rotation2d.fromDegrees(0)));
->>>>>>> Stashed changes
             }
             m_lastCommandedOmega = 0.0;
             coroutine.yield();
           }
           for (SwerveModule module : m_modules) {
-<<<<<<< Updated upstream
             module.setDesiredState(0.0, 0.0); // reached it — stop
-=======
-            module.setDesiredState(new SwerveModuleVelocity()); // reached it — stop
->>>>>>> Stashed changes
           }
         })
         .whenCanceled(() -> {
           for (SwerveModule module : m_modules) {
-<<<<<<< Updated upstream
             module.setDesiredState(0.0, 0.0); // interrupted — stop
-=======
-            module.setDesiredState(new SwerveModuleVelocity()); // interrupted — stop
->>>>>>> Stashed changes
           }
         })
         .named("Drive Distance");
   }
 
-<<<<<<< Updated upstream
   /**
    * ====== NEXT LESSON: CHANGE THE CODE BELOW ======
    * Rebuild this on the new helper: turn the rotation rate, in revolutions per second,
