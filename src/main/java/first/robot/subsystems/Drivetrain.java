@@ -1,17 +1,10 @@
 package first.robot.subsystems;
 
 import static org.wpilib.units.Units.Degrees;
-<<<<<<< Updated upstream
-
-import java.util.function.DoubleSupplier;
-=======
 import static org.wpilib.units.Units.MetersPerSecond;
 
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
-
-import com.ctre.phoenix6.CANBus;
-import com.ctre.phoenix6.hardware.Pigeon2;
->>>>>>> Stashed changes
 
 import org.wpilib.command3.Command;
 import org.wpilib.command3.Mechanism;
@@ -19,26 +12,19 @@ import org.wpilib.command3.Scheduler;
 import org.wpilib.hardware.bus.CANPort;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
-<<<<<<< Updated upstream
-=======
 import org.wpilib.math.kinematics.ChassisVelocities;
->>>>>>> Stashed changes
 import org.wpilib.math.kinematics.SwerveDriveKinematics;
 import org.wpilib.math.kinematics.SwerveDriveOdometry;
 import org.wpilib.math.kinematics.SwerveModulePosition;
 import org.wpilib.math.kinematics.SwerveModuleVelocity;
-<<<<<<< Updated upstream
-import org.wpilib.telemetry.Telemetry;
-
-import com.ctre.phoenix6.CANBus;
-import com.ctre.phoenix6.hardware.Pigeon2;
-=======
 import org.wpilib.math.util.MathUtil;
 import org.wpilib.smartdashboard.Field2d;
 import org.wpilib.telemetry.Telemetry;
 import org.wpilib.units.measure.AngularVelocity;
 import org.wpilib.units.measure.LinearVelocity;
->>>>>>> Stashed changes
+
+import com.ctre.phoenix6.CANBus;
+import com.ctre.phoenix6.hardware.Pigeon2;
 
 import first.robot.Constants.DriveConstants;
 import first.robot.Constants.HeadingConstants;
