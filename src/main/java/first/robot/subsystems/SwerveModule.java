@@ -7,6 +7,8 @@ import static org.wpilib.units.Units.RotationsPerSecond;
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
@@ -40,6 +42,8 @@ public class SwerveModule {
   private final CANcoder m_steerEncoder;
   private final TalonFXSimState m_driveSim;
   private final TalonFXSimState m_steerSim;
+  private final PositionVoltage m_steerRequest = new PositionVoltage(0);
+  private final VelocityVoltage m_driveRequest = new VelocityVoltage(0);
 
   /**
    * ====== NEXT LESSON: ADD CODE HERE ======
@@ -129,7 +133,7 @@ public class SwerveModule {
     // Steering: the same P control, error wrapped to ±180° in one call now.
     double error = MathUtil.inputModulus(
         state.angle.getDegrees() - getSteerAngleDegrees(), -180, 180);
-    double steerOutput = clamp(SteerConstants.kP * error, -1.0, 1.0);
+    double steerOutput = clamp(SteerConstants.kSteerKP * error, -1.0, 1.0);
     m_steerMotor.setThrottle(steerOutput);
 
     // Drive: meters per second → fraction of max, with the cosine scale.
@@ -162,9 +166,7 @@ public class SwerveModule {
 
   /** Current steering angle in degrees (through the real 25:1 reduction). */
   public double getSteerAngleDegrees() {
-    double steerRotations =
-        m_steerMotor.getPosition().getValue().in(Rotations) / SteerConstants.kSteerGearRatio;
-    return steerRotations * 360.0;
+    return m_steerMotor.getPosition().getValue().in(Rotations) * 360.0;
   }
 
   /**
@@ -174,9 +176,7 @@ public class SwerveModule {
 
   /** How far this module's wheel has driven, in meters, since the last reset. */
   public double getDistanceMeters() {
-    double rotorRotations = m_driveMotor.getPosition().getValue().in(Rotations);
-    double wheelRotations = rotorRotations / DriveConstants.kDriveGearRatio;
-    return wheelRotations * DriveConstants.kWheelCircumferenceMeters;
+    return m_driveMotor.getPosition().getValue().in(Rotations) * DriveConstants.kWheelCircumferenceMeters;
   }
 
   /**
@@ -186,9 +186,7 @@ public class SwerveModule {
 
   /** Current wheel speed in meters per second. */
   public double getDriveVelocityMetersPerSec() {
-    double wheelRps =
-        m_driveMotor.getVelocity().getValue().in(RotationsPerSecond) / DriveConstants.kDriveGearRatio;
-    return wheelRps * DriveConstants.kWheelCircumferenceMeters;
+    return m_driveMotor.getVelocity().getValue().in(RotationsPerSecond) * DriveConstants.kWheelCircumferenceMeters;
   }
 
   /** How far this wheel has rolled and where it's pointing — for odometry. */

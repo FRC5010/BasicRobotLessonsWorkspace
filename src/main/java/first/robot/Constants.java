@@ -65,6 +65,8 @@ public final class Constants {
      * per wheel rotation per second — the voltage that holds a speed with no error at
      * all — and a small kP to correct whatever the model misses.
      */
+    public static final double kDriveKV = 0.8; // volts per wheel rotation per second
+    public static final double kDriveKP = 0.1; // small proportional gain for firmware velocity control 
   }
 
   public static final class SteerConstants {
@@ -74,9 +76,8 @@ public final class Constants {
      * from now on. Keep the gear ratio — it now reads as rotor to CANcoder — and add a
      * firmware P gain in volts per rotation of error.
      */
-
-    public static final double kP = 0.0005;          // from Lesson 5 — retune once the real gearing lands
     public static final double kSteerGearRatio = 25.0; // rotor : steering
+    public static final double kSteerKP = 40.0;
     public static final InvertedValue kSteerInverted = InvertedValue.CounterClockwise_Positive; // flip if your steering counts backward
   }
 
